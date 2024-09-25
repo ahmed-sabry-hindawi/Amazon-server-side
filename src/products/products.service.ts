@@ -10,25 +10,46 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
   ) {}
-
+  /*
   async getAllProducts(): Promise<Product[]> {
     try {
       const products = await this.productModel.find().exec(); // Use `.exec()` for proper query execution
       if (!products) {
         throw new HttpException('No products found', HttpStatus.NOT_FOUND);
       }
+      await products.populate(['sellerId', 'reviews', 'categoryId']);
+      return products;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }*/
+  async getAllProducts(): Promise<Product[]> {
+    try {
+      // Chain the populate method to the query before executing it
+      const products = await this.productModel
+        .find()
+        .populate(['sellerId', 'reviews', 'categoryId']) // Apply populate here
+        .exec(); // Then execute the query
+
+      if (!products) {
+        throw new HttpException('No products found', HttpStatus.NOT_FOUND);
+      }
+
       return products;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async getProductById(productId: string): Promise<Product> {
     try {
-      const product = await this.productModel.findById(productId).exec();
+      const product = await this.productModel
+        .findById(productId)
+        .populate(['sellerId', 'reviews', 'categoryId'])
+        .exec();
       if (!product) {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
       }
+
       return product;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -39,7 +60,6 @@ export class ProductsService {
     try {
       const createdProduct = await this.productModel.create(product);
 
-      await createdProduct.populate(['sellerId', 'reviews', 'categoryId']);
       return createdProduct;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

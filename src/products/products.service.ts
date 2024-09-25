@@ -13,7 +13,7 @@ export class ProductsService {
 
   async getAllProducts(): Promise<Product[]> {
     try {
-      const products = await this.productModel.find().exec(); // Use `.exec()` for proper query execution
+      const products = await this.productModel.find().populate('reviews').exec(); // Use `.exec()` for proper query execution
       if (!products) {
         throw new HttpException('No products found', HttpStatus.NOT_FOUND);
       }

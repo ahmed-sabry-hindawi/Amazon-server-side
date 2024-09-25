@@ -8,10 +8,14 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { Product } from './schemas/product.schema';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
+import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
+import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
+import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 
 @Controller('products')
 export class ProductsController {
@@ -28,6 +32,8 @@ export class ProductsController {
   }
 
   @Post()
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard,AuthorizationGuard)
   async createProduct(
     @Body() createProductDto: CreateProductDto,
   ): Promise<Product> {

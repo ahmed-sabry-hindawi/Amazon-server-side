@@ -6,6 +6,7 @@ import { ProductItemDto } from './Product-item.dto';
 export class CreateOrderDto {
   
   @IsNotEmpty()
+  @IsOptional()
   @IsMongoId()
   userId: string;
 

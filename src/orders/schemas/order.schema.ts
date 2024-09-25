@@ -8,7 +8,7 @@ export enum OrderStatus {
   CANCELLED = 'cancelled',
 }
 
-@Schema()
+@Schema({timestamps: true})
 export class Order extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
@@ -33,6 +33,7 @@ export class Order extends Document {
       en: { type: String, enum: OrderStatus, default: OrderStatus.PENDING },
       ar: { type: String, enum: ['قيد الانتظار', 'تم الشحن', 'تم التوصيل', 'ملغاة'], default: 'قيد الانتظار' },
     },
+    _id: false,
   })
   orderStatus: {
     en: OrderStatus;
@@ -55,8 +56,6 @@ export class Order extends Document {
  @Prop({ type: Types.ObjectId, ref: 'Payment', required: true })
  paymentId: Types.ObjectId;
 
-  @Prop({ default: Date.now })
-  orderDate: Date;
 }
 
 

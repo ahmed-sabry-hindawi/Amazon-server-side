@@ -52,6 +52,9 @@ import { MongooseModule } from '@nestjs/mongoose';
     CategoriesModule,
     PaymentsModule,
     SubCategoryModule,
+    OrdersModule,
+    ReviewsModule,
+    CartsModule,
   ],
 
   controllers: [AppController],

@@ -7,7 +7,10 @@ import { ObjectId } from 'mongoose';
 @Controller('shipping')
 export class ShippingController {
   constructor(private readonly _ShippingService:ShippingService) {}
-
+  @Get()
+  async getAllShippings(): Promise<Shipping[]> {
+    return  this._ShippingService.getAllShippings();
+  }
 @Post()
   async createShipping(@Body() createShippingDto: CreateShippingDto): Promise<Shipping> {
     return this._ShippingService.createShipping(createShippingDto);
@@ -28,8 +31,5 @@ export class ShippingController {
     return this._ShippingService.deleteShipping(id);
   }
 
-  @Get()
-  async getAllShippings(): Promise<Shipping[]> {
-    return this._ShippingService.getAllShippings();
-  }
+
 }

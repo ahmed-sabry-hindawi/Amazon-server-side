@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PaymentsController } from './payments.controller';
-import { PaymentsService } from './payments.service';
+import { PaymentService } from './payments.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
 
@@ -9,6 +9,6 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
   ],
   controllers: [PaymentsController],
-  providers: [PaymentsService],
+  providers: [PaymentService],
 })
 export class PaymentsModule {}

@@ -23,7 +23,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       useFactory: (configService: ConfigService) => {
         return {
           secret: configService.get('JWT_SECRET'),
-          signOptions: { expiresIn: '3h' },
+          signOptions: { expiresIn: '1d' },
         };
       },
       global: true,

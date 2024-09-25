@@ -25,7 +25,7 @@ export class OrdersController {
   constructor(private ordersService: OrdersService) {}
 
   // Create a new order
-  // done
+  // done ok
   @Post()
   @UseGuards(AuthenticationGuard)
   async create(

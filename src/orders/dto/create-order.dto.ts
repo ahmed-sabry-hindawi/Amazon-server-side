@@ -1,10 +1,20 @@
-import { IsNotEmpty, IsArray, ValidateNested, IsEnum, IsObject, IsOptional, IsMongoId, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsMongoId,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
 import { ProductItemDto } from './Product-item.dto';
+// import { ProductItemDto } from './Product-item.dto';
 
 export class CreateOrderDto {
-  
   @IsNotEmpty()
   @IsOptional()
   @IsMongoId()

@@ -17,8 +17,8 @@ export class Shipping {
 
   @Prop({ default: true })
   isActive: boolean;
-  // @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }] })
-  // orders: mongoose.Types.ObjectId[];
+  @Prop( { type: mongoose.Schema.Types.ObjectId, ref: 'Order',required:true } )
+  orderId: mongoose.Types.ObjectId;
 }
 
 // export const ShippingSchema = SchemaFactory.createForClass(Shipping);

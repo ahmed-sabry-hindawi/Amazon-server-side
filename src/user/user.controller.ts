@@ -12,13 +12,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateUser } from './Dtos/UpdateUser.dtos';
-import { CreateUser } from './Dtos/createUser.dtos';
 import { Login } from './Dtos/login.dtos';
 import { AuthService } from 'src/auth/auth.service';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
+import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
+import { CreateUserDto } from './Dtos/createUser.dtos';
 
 @Controller('user')
 export class UserController {
@@ -29,22 +29,22 @@ export class UserController {
 
   @Get('')
   @HttpCode(HttpStatus.FOUND)
-  async getAllUser(): Promise<UpdateUser[]> {
-    return this._UserService.getAllUser();
+  async getAllUser(): Promise<UpdateUserDto[]> {
+    return this._UserService.getAllUsers();
   }
 
   @Get('/:id')
   @Roles('admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
-  findUser(@Param('id') id): Promise<UpdateUser> {
+  findUser(@Param('id') id): Promise<UpdateUserDto> {
     return this._UserService.getUserById(id);
   }
 
   @Post('register')
   @HttpCode(HttpStatus.OK)
-  async createUser(@Body() user: CreateUser): Promise<UpdateUser> {
-    return this._UserService.CreateNewUSer(user);
+  async CreateUser(@Body() user: CreateUserDto): Promise<UpdateUserDto> {
+    return this._UserService.createNewUser(user);
   }
 
   @Post('/login')
@@ -77,10 +77,10 @@ export class UserController {
   }
   @Patch('/:id')
   @HttpCode(HttpStatus.OK)
-  updateUser(
+  UpdateUserDto(
     @Param() { id }: any,
-    @Body() userData: UpdateUser,
-  ): Promise<UpdateUser> {
+    @Body() userData: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
     return this._UserService.updateUserById(id, userData);
   }
 } // class

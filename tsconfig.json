@@ -9,13 +9,18 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",  // <-- Set the root directory to 'src'
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "forceConsistentCasingInFileNames": true,  // <-- Enable consistent casing for file names
+    "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,  // <-- Enable ES module interoperability
+    "moduleResolution": "node"  // <-- Use Node.js style module resolution
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

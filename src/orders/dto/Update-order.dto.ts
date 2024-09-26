@@ -1,7 +1,7 @@
 import { IsOptional, IsArray, ValidateNested, IsEnum, IsObject, IsMongoId, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
-import { ProductItemDto } from './product-item.dto.ts';
+import { ProductItemDto } from './product-item.dto';
 export class UpdateOrderDto {
   @IsOptional()
   @IsMongoId()

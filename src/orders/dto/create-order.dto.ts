@@ -48,10 +48,6 @@ export class CreateOrderDto {
   @IsNotEmpty()
   @IsMongoId()
   paymentId: string;
-
-  @IsOptional()
-  @IsNotEmpty()
-  orderDate?: Date;
 }
 
 class OrderStatusDto {

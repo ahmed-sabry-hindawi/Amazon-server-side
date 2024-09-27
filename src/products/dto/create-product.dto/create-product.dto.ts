@@ -21,9 +21,6 @@ export class ProductNameDto {
 }
 
 export class CreateProductDto {
-  @IsMongoId()
-  sellerId: string;
-
   @IsOptional()
   @IsArray()
   reviews?: string[];

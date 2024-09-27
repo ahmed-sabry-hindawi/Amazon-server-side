@@ -1,5 +1,6 @@
 import { ProductsService } from './products.service';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -17,6 +18,7 @@ import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
+import { Types } from 'mongoose';
 
 @Controller('products')
 export class ProductsController {
@@ -40,7 +42,15 @@ export class ProductsController {
     @Req() req: any,
   ): Promise<Product> {
     const sellerId = req.user.id;
-    return this.productsService.createProduct(createProductDto, sellerId);
+
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new BadRequestException('Invalid sellerId');
+    }
+
+    return this.productsService.createProduct(
+      createProductDto,
+      new Types.ObjectId(sellerId),
+    );
   }
 
   @Put(':id')

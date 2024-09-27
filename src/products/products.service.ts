@@ -71,10 +71,12 @@ export class ProductsService {
     sellerId: Types.ObjectId,
   ): Promise<Product> {
     try {
-      const newProduct = { ...product, sellerId }; // Assign sellerId
-      const createdProduct = await this.productModel.create(newProduct);
+      const newProduct = { ...product, sellerId }; // Assign sellerId to product
+      const createdProduct = await this.productModel.create(newProduct); // Save to DB
       return createdProduct;
     } catch (error) {
+      console.log('Seller ID:', sellerId); // Log sellerId for debugging if needed
+
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

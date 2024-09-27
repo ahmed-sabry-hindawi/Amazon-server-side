@@ -35,8 +35,6 @@ import { MongooseModule } from '@nestjs/mongoose';
       useFactory: async (_configService: ConfigService) => {
         return {
           uri: _configService.get('MONGO_URI'),
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
         };
       },
     }),

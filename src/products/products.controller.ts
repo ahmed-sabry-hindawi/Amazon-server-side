@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { Product } from './schemas/product.schema';
@@ -33,11 +34,13 @@ export class ProductsController {
 
   @Post()
   @Roles('seller')
-  @UseGuards(AuthenticationGuard,AuthorizationGuard)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async createProduct(
     @Body() createProductDto: CreateProductDto,
+    @Req() req: any,
   ): Promise<Product> {
-    return this.productsService.createProduct(createProductDto);
+    const sellerId = req.user.id;
+    return this.productsService.createProduct(createProductDto, sellerId);
   }
 
   @Put(':id')

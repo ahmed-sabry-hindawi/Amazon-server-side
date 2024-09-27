@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './schemas/product.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
 
@@ -56,10 +56,23 @@ export class ProductsService {
     }
   }
 
-  async createProduct(product: CreateProductDto): Promise<Product> {
-    try {
-      const createdProduct = await this.productModel.create(product);
+  // async createProduct(product: CreateProductDto): Promise<Product> {
+  //   try {
+  //     const createdProduct = await this.productModel.create(product);
 
+  //     return createdProduct;
+  //   } catch (error) {
+  //     throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
+
+  async createProduct(
+    product: CreateProductDto,
+    sellerId: Types.ObjectId,
+  ): Promise<Product> {
+    try {
+      const newProduct = { ...product, sellerId }; // Assign sellerId
+      const createdProduct = await this.productModel.create(newProduct);
       return createdProduct;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

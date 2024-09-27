@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
-import { ProductItemDto } from './product-item.dto';
+import { ProductItemDto } from './Product-item.dto';
 
 export class UpdateOrderDto {
   @IsOptional()

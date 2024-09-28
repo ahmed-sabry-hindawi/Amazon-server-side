@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cart } from './schemas/cart.schema';
@@ -19,9 +23,12 @@ export class CartsService {
   ) {}
 
   // Create a new cart
+
   async create(createCartDto: CreateCartDto): Promise<Cart> {
     try {
-      const cart = await this.cartModel.findOne({ userId: createCartDto.userId });
+      const cart = await this.cartModel.findOne({
+        userId: createCartDto.userId,
+      });
       if (cart) {
         throw new Error('Cart already exists for this user');
       }
@@ -34,7 +41,9 @@ export class CartsService {
   // Get cart by user ID
   async findByUserId(userId: string): Promise<Cart> {
     try {
-      const cart = (await this.cartModel.findOne({ userId })).populate('userId');
+      const cart = (await this.cartModel.findOne({ userId })).populate(
+        'userId',
+      );
       if (!cart) {
         throw new NotFoundException(`Cart for user ID ${userId} not found`);
       }
@@ -45,23 +54,28 @@ export class CartsService {
   }
 
   // Update cart by user ID
-  async updateByUserId(userId: string, updateCartDto: UpdateCartDto): Promise<Cart> {
+  async updateByUserId(
+    userId: string,
+    updateCartDto: UpdateCartDto,
+  ): Promise<Cart> {
     try {
       // Find the cart for the user
       let cart = await this.cartModel.findOne({ userId });
       if (!cart) {
         throw new NotFoundException(`Cart for user ID ${userId} not found`);
       }
-  
+
       // Check if the items array is provided in the update DTO
       if (updateCartDto.items) {
         for (const updateItem of updateCartDto.items) {
           // Convert the productId to ObjectId
           const productIdObjectId = new Types.ObjectId(updateItem.productId);
-  
+
           // Find the existing item in the cart by productId (ObjectId comparison)
-          const existingItem = cart.items.find(item => item.productId.equals(productIdObjectId));
-  
+          const existingItem = cart.items.find((item) =>
+            item.productId.equals(productIdObjectId),
+          );
+
           // If the item exists, update its quantity; otherwise, add it as a new item
           if (existingItem) {
             existingItem.quantity = updateItem.quantity;
@@ -69,20 +83,20 @@ export class CartsService {
             // Add the new item to the cart if it doesn't exist
             cart.items.push({
               productId: productIdObjectId, // Use ObjectId here
-              quantity: updateItem.quantity
+              quantity: updateItem.quantity,
             });
           }
         }
       }
-  
+
       // Recalculate the total price based on updated items
       cart.totalPrice = await this.calculateTotalPrice(
-        cart.items.map(item => ({
+        cart.items.map((item) => ({
           productId: item.productId.toString(),
           quantity: item.quantity,
-        }))
+        })),
       );
-  
+
       // Save the updated cart and return it
       return await cart.save();
     } catch (error) {
@@ -90,17 +104,24 @@ export class CartsService {
     }
   }
 
-
   // Remove item from cart
   async removeItem(userId: string, productId: Types.ObjectId): Promise<Cart> {
     try {
       const cart = await this.cartModel.findOne({ userId });
-      if (!cart) throw new NotFoundException(`Cart for user ID ${userId} not found`);
+      if (!cart)
+        throw new NotFoundException(`Cart for user ID ${userId} not found`);
 
       // const productId = new Types.ObjectId(removeItemDto.productId);
-      cart.items = cart.items.filter(item => !item.productId.equals(productId));
+      cart.items = cart.items.filter(
+        (item) => !item.productId.equals(productId),
+      );
 
-      cart.totalPrice = await this.calculateTotalPrice(cart.items.map(item => ({ productId: item.productId.toString(), quantity: item.quantity })));
+      cart.totalPrice = await this.calculateTotalPrice(
+        cart.items.map((item) => ({
+          productId: item.productId.toString(),
+          quantity: item.quantity,
+        })),
+      );
       return await cart.save();
     } catch (error) {
       throw new InternalServerErrorException('Failed to remove item from cart');
@@ -112,14 +133,20 @@ export class CartsService {
     try {
       // Attempt to find the user's cart
       let cart = await this.cartModel.findOne({ userId });
-      
+
       // If no cart exists, create a new one
       if (!cart) {
-        cart = await this.create({ userId, items: [], totalPrice: 0 } as CreateCartDto);
+        cart = await this.create({
+          userId,
+          items: [],
+          totalPrice: 0,
+        } as CreateCartDto);
       }
 
       const productId = addItemDto.productId;
-      const existingItem = cart.items.find(item => item.productId.equals(productId));
+      const existingItem = cart.items.find((item) =>
+        item.productId.equals(productId),
+      );
 
       if (existingItem) {
         existingItem.quantity += addItemDto.quantity; // Update quantity
@@ -128,7 +155,8 @@ export class CartsService {
       }
 
       const product = await this.productModel.findById(productId);
-      if (!product) throw new NotFoundException(`Product with ID ${productId} not found`);
+      if (!product)
+        throw new NotFoundException(`Product with ID ${productId} not found`);
 
       cart.totalPrice += addItemDto.quantity * product.price; // Update totalPrice
       return await cart.save();
@@ -136,8 +164,6 @@ export class CartsService {
       throw new InternalServerErrorException('Failed to add item to cart');
     }
   }
-
-  
 
   // Checkout process
   // need to confirm

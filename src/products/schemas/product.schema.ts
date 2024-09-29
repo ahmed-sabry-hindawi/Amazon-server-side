@@ -9,8 +9,12 @@ export class Product {
   @Prop({ type: [Types.ObjectId], ref: 'Review' })
   reviews: Types.ObjectId[];
 
-  @Prop({ type: Types.ObjectId, ref: 'Category' })
-  categoryId: Types.ObjectId;
+  // @Prop({ type: Types.ObjectId, ref: 'Category' })
+  // categoryId: Types.ObjectId;
+
+  // Reference to Subcategory instead of Category
+  @Prop({ type: Types.ObjectId, ref: 'Subcategory', required: true })
+  subcategoryId: Types.ObjectId;
 
   @Prop({
     required: true,

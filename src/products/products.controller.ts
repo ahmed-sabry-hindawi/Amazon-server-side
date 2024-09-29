@@ -113,11 +113,11 @@ export class ProductsController {
     return this.productsService.getProductsBySeller(sellerId);
   }
 
-  @Get('category/:categoryId')
+  @Get('category/:subcategoryId')
   async getProductsByCategory(
-    @Param('categoryId') categoryId: string,
+    @Param('subcategoryId') subcategoryId: string,
   ): Promise<Product[]> {
-    return this.productsService.getProductsByCategory(categoryId);
+    return this.productsService.getProductsByCategory(subcategoryId);
   }
 
   @Get('search')

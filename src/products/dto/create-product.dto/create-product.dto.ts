@@ -26,7 +26,7 @@ export class CreateProductDto {
   reviews?: string[];
 
   @IsMongoId()
-  categoryId: string;
+  subcategoryId: string;
 
   @ValidateNested()
   @Type(() => ProductNameDto)

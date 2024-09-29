@@ -8,7 +8,10 @@ import { User } from 'src/user/Schemas/users.schema';
 
 @Injectable()
 export class OrdersService {
-  constructor(@InjectModel(Order.name) private orderModel: Model<Order>,@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(Order.name) private orderModel: Model<Order>,
+    @InjectModel(User.name) private userModel: Model<User>,
+  ) {}
 
   // Create a new order
   async create(createOrder: CreateOrderDto): Promise<Order> {
@@ -53,9 +56,11 @@ export class OrdersService {
 
   // Update order by ID
   async updateById(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
-    const order = await this.orderModel.findByIdAndUpdate(id, updateOrderDto, {
-      new: true,
-    }).populate('userId');
+    const order = await this.orderModel
+      .findByIdAndUpdate(id, updateOrderDto, {
+        new: true,
+      })
+      .populate('userId');
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -64,7 +69,9 @@ export class OrdersService {
 
   // Delete order by ID
   async deleteById(id: string): Promise<Order> {
-    const order = await this.orderModel.findByIdAndDelete(id).populate('userId');
+    const order = await this.orderModel
+      .findByIdAndDelete(id)
+      .populate('userId');
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -81,7 +88,7 @@ export class OrdersService {
     const order = await this.orderModel.findByIdAndUpdate(
       id,
       { orderStatus: statusDto },
-      { new: true },  // return the updated document
+      { new: true }, // return the updated document
     );
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);

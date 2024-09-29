@@ -28,7 +28,7 @@ export class ProductsService {
       // Chain the populate method to the query before executing it
       const products = await this.productModel
         .find()
-        .populate(['sellerId', 'reviews', 'categoryId']) // Apply populate here
+        .populate(['sellerId', 'reviews', 'subcategoryId']) // Apply populate here
         .exec(); // Then execute the query
 
       if (!products) {
@@ -44,7 +44,7 @@ export class ProductsService {
     try {
       const product = await this.productModel
         .findById(productId)
-        .populate(['sellerId', 'reviews', 'categoryId'])
+        .populate(['sellerId', 'reviews', 'subcategoryId'])
         .exec();
       if (!product) {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
@@ -218,9 +218,9 @@ export class ProductsService {
     }
   }
 
-  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+  async getProductsByCategory(subcategoryId: string): Promise<Product[]> {
     try {
-      const products = await this.productModel.find({ categoryId }).exec();
+      const products = await this.productModel.find({ subcategoryId }).exec();
       if (!products) {
         throw new HttpException(
           'No products found in this category',

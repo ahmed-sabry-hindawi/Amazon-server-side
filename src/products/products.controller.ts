@@ -24,6 +24,72 @@ import { Types } from 'mongoose';
 export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
+  // Routes with specific paths should come first
+  @Get('sort')
+  async getProductsWithSorting(
+    @Query('sortBy') sortBy: string,
+    @Query('order') order: 'asc' | 'desc',
+  ): Promise<Product[]> {
+    return this.productsService.getProductsWithSorting(sortBy, order);
+  }
+
+  @Get('pagination')
+  async getProductsWithPagination(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<{ products: Product[]; totalCount: number }> {
+    return this.productsService.getProductsWithPagination(page, limit);
+  }
+
+  @Get('filter')
+  async getProductsWithFiltering(
+    @Query() filters: { [key: string]: any },
+  ): Promise<Product[]> {
+    return this.productsService.getProductsWithFiltering(filters);
+  }
+
+  @Get('advanced-filter')
+  async getProductsWithAdvancedFiltering(
+    @Query('filters') filters: { [key: string]: any },
+    @Query('pagination') pagination: { page: number; limit: number },
+    @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
+  ): Promise<{ products: Product[]; totalCount: number }> {
+    return this.productsService.getProductsWithAdvancedFiltering(
+      filters,
+      pagination,
+      sorting,
+    );
+  }
+
+  @Get('search')
+  async getProductsBySearchQuery(
+    @Query('query') query: string,
+  ): Promise<Product[]> {
+    return this.productsService.getProductsBySearchQuery(query);
+  }
+
+  @Get('category/:subcategoryId')
+  async getProductsByCategory(
+    @Param('subcategoryId') subcategoryId: string,
+  ): Promise<Product[]> {
+    return this.productsService.getProductsByCategory(subcategoryId);
+  }
+
+  @Get('seller/:sellerId')
+  async getProductsBySeller(
+    @Param('sellerId') sellerId: string,
+  ): Promise<Product[]> {
+    return this.productsService.getProductsBySeller(sellerId);
+  }
+
+  @Get('highlighted-reviews/:id')
+  async getProductsWithHighlightedReviews(
+    @Param('id') productId: string,
+  ): Promise<Product> {
+    return this.productsService.getProductsWithHighlightedReviews(productId);
+  }
+
+  // General product routes
   @Get()
   async getAllProducts(): Promise<Product[]> {
     return this.productsService.getAllProducts();
@@ -54,6 +120,8 @@ export class ProductsController {
   }
 
   @Put(':id')
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -62,11 +130,15 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async deleteProduct(@Param('id') productId: string): Promise<void> {
     return this.productsService.deleteProduct(productId);
   }
 
   @Post(':id/reviews')
+  @Roles('user')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async addReviewToProduct(
     @Param('id') productId: string,
     @Body('reviewId') reviewId: string,
@@ -75,6 +147,8 @@ export class ProductsController {
   }
 
   @Delete(':id/reviews/:reviewId')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async removeReviewFromProduct(
     @Param('id') productId: string,
     @Param('reviewId') reviewId: string,
@@ -83,6 +157,8 @@ export class ProductsController {
   }
 
   @Post(':id/images')
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async addImageToProduct(
     @Param('id') productId: string,
     @Body('imageUrl') imageUrl: string,
@@ -91,6 +167,8 @@ export class ProductsController {
   }
 
   @Delete(':id/images')
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async removeImageFromProduct(
     @Param('id') productId: string,
     @Body('imageUrl') imageUrl: string,
@@ -99,74 +177,12 @@ export class ProductsController {
   }
 
   @Put(':id/stock')
+  @Roles('seller')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProductStock(
     @Param('id') productId: string,
     @Body('stock') stock: number,
   ): Promise<Product> {
     return this.productsService.updateProductStock(productId, stock);
-  }
-
-  @Get('seller/:sellerId')
-  async getProductsBySeller(
-    @Param('sellerId') sellerId: string,
-  ): Promise<Product[]> {
-    return this.productsService.getProductsBySeller(sellerId);
-  }
-
-  @Get('category/:subcategoryId')
-  async getProductsByCategory(
-    @Param('subcategoryId') subcategoryId: string,
-  ): Promise<Product[]> {
-    return this.productsService.getProductsByCategory(subcategoryId);
-  }
-
-  @Get('search')
-  async getProductsBySearchQuery(
-    @Query('query') query: string,
-  ): Promise<Product[]> {
-    return this.productsService.getProductsBySearchQuery(query);
-  }
-
-  @Get('pagination')
-  async getProductsWithPagination(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-  ): Promise<{ products: Product[]; totalCount: number }> {
-    return this.productsService.getProductsWithPagination(page, limit);
-  }
-
-  @Get('sort')
-  async getProductsWithSorting(
-    @Query('sortBy') sortBy: string,
-    @Query('order') order: 'asc' | 'desc',
-  ): Promise<Product[]> {
-    return this.productsService.getProductsWithSorting(sortBy, order);
-  }
-
-  @Get('filter')
-  async getProductsWithFiltering(
-    @Query() filters: { [key: string]: any },
-  ): Promise<Product[]> {
-    return this.productsService.getProductsWithFiltering(filters);
-  }
-
-  @Get('advanced-filter')
-  async getProductsWithAdvancedFiltering(
-    @Query('filters') filters: { [key: string]: any },
-    @Query('pagination') pagination: { page: number; limit: number },
-    @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
-  ): Promise<{ products: Product[]; totalCount: number }> {
-    return this.productsService.getProductsWithAdvancedFiltering(
-      filters,
-      pagination,
-      sorting,
-    );
-  }
-
-  @Get('highlighted-reviews/:id')
-  async getProductsWithHighlightedReviews(
-    @Param('id') productId: string,
-  ): Promise<Product> {
-    return this.productsService.getProductsWithHighlightedReviews(productId);
   }
 }

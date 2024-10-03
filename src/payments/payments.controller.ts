@@ -17,7 +17,7 @@ import { RefundPaymentDto } from './dto/refund-payment/refund-payment.dto';
 @UseGuards(AuthenticationGuard)
 export class PaymentsController {
   constructor(private readonly paymentService: PaymentService) {}
-
+  @Roles('user')
   @Post('create')
   async createPayment(
     @Req() req,

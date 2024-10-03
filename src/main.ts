@@ -12,7 +12,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
+// Enable CORS for all origins
+app.enableCors();
   await app.listen(3000);
 }
 bootstrap();

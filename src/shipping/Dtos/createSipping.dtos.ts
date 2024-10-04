@@ -3,6 +3,7 @@ import {
   IsBoolean,
   isBoolean,
   IsDateString,
+  IsMongoId,
   IsNotEmpty,
   isNotEmpty,
   IsString,
@@ -12,15 +13,18 @@ import { DateExpression } from 'mongoose';
 export class CreateShippingDto {
   @IsString()
   @IsNotEmpty()
-  address: String;
+  address: string;
 
   // @IsDateString()
   // expectedDeliveryDate: DateExpression;
 
   @IsString()
   @IsNotEmpty()
-  trackingNumber: String;
+  trackingNumber: string;
 
   @IsBoolean()
   isActive: Boolean;
+
+  @IsMongoId()
+  orderId:string
 }

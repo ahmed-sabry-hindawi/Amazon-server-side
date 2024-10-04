@@ -14,6 +14,7 @@ import { OrdersModule } from './orders/orders.module';
 import { CartsModule } from './carts/carts.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ShippingModule } from './shipping/shipping.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     OrdersModule,
     ReviewsModule,
     CartsModule,
+    ShippingModule
   ],
 
   controllers: [AppController],

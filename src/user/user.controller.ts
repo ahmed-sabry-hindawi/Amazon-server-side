@@ -21,6 +21,7 @@ import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
 import { CreateUserDto } from './Dtos/createUser.dtos';
 
 @Controller('user')
+@UseGuards(AuthenticationGuard, AuthorizationGuard)
 export class UserController {
   constructor(
     private readonly _UserService: UserService,
@@ -35,7 +36,7 @@ export class UserController {
 
   @Get('/:id')
   @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
   findUser(@Param('id') id): Promise<UpdateUserDto> {
     return this._UserService.getUserById(id);
@@ -56,7 +57,6 @@ export class UserController {
 
   @Patch('update/password')
   @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.OK)
   async updatePassword(
     @Request() req,

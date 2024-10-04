@@ -22,7 +22,6 @@ import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
 import { CreateUserDto } from './Dtos/createUser.dtos';
 
 @Controller('user')
-@UseGuards(AuthenticationGuard, AuthorizationGuard)
 export class UserController {
   constructor(
     private readonly _UserService: UserService,
@@ -31,13 +30,15 @@ export class UserController {
 
   @Get('')
   @HttpCode(HttpStatus.FOUND)
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async getAllUser(): Promise<UpdateUserDto[]> {
     return this._UserService.getAllUsers();
   }
 
   @Get('/:id')
-  @Roles('admin')
-  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Roles('user','admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
   findUser(@Param('id') id): Promise<UpdateUserDto> {
     return this._UserService.getUserById(id);
@@ -65,8 +66,9 @@ export class UserController {
   }
 
   @Patch('update/password')
-  @Roles('admin')
+  @Roles('user','admin')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updatePassword(
     @Request() req,
     @Body('newPassword') newPassword: string, // Properly extract the newPassword from the request body
@@ -80,12 +82,16 @@ export class UserController {
   }
 
   @Delete('/:id')
+  @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   DeleteUser(@Param('id') id: any): Promise<void> {
     return this._UserService.deleteUser(id);
   }
   @Patch('/:id')
+  @Roles('user','admin')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   UpdateUserDto(
     @Param() { id }: any,
     @Body() userData: UpdateUserDto,

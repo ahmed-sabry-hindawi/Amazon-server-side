@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -47,13 +48,21 @@ export class UserController {
   async CreateUser(@Body() user: CreateUserDto): Promise<UpdateUserDto> {
     return this._UserService.createNewUser(user);
   }
+  @Post('verifyEmail')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body('email')  email: string ) {
+    const user = await this._UserService.getUserByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Email does not exist');
+    }
+    return { message: 'Email verified, proceed to step 2' };
+  }
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() user: Login): Promise<{ token: string }> {
     return await this._AuthService.login(user);
   }
-
 
   @Patch('update/password')
   @Roles('admin')

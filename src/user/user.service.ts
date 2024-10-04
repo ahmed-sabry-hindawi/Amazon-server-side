@@ -27,24 +27,7 @@ export class UserService {
     }
   }
 
-  // this function to Create new user
-
-  // async CreateNewUSer(userData: CreateUser): Promise<UpdateUser> {
-  //   const exitingUser = await this.userModel
-  //     .findOne({ email: userData.email })
-  //     .exec();
-  //   if (exitingUser) {
-  //     throw new NotFoundException('this email is already exist');
-  //   }
-
-  //   const salt = await bcrypt.genSalt(10);
-  //   const hashedPassword = await bcrypt.hash(userData.password, salt);
-  //   userData.password = hashedPassword;
-
-  //   const newUser = await this.userModel.create(userData);
-
-  //   return newUser.save();
-  // }
+  
 
   async createNewUser(userData: CreateUserDto): Promise<UpdateUserDto> {
     try {
@@ -72,21 +55,7 @@ export class UserService {
   }
   // ##############################
 
-  // async updateUserPassword(userId: ObjectId, newPassword: string): Promise<any> {
-
-  //   const user = await this.userModel.findById(userId).exec();
-  //   if (!user) {
-  //     throw new NotFoundException("User with id ${userId} not found");
-  //   }
-
-  //   const saltOrRounds = 10;
-  //   const hashedPassword = await bcrypt.hash(newPassword, saltOrRounds);
-
-  //   user.password = hashedPassword;
-  //   await user.save();
-
-  //   return { message: 'Password updated successfully' };
-  // }
+  
 
   async updateUserPassword(
     userId: ObjectId,
@@ -113,13 +82,6 @@ export class UserService {
 
   // ##############################
 
-  // async getUserById(id: string): Promise<UpdateUser> {
-  //   const foundUser = await this.userModel.findById(id).exec();
-  //   if (!foundUser) {
-  //     throw new NotFoundException(`User with id ${id} not found`);
-  //   }
-  //   return foundUser;
-  // }
   async getUserById(id: string): Promise<UpdateUserDto> {
     try {
       const user = await this.userModel.findById(id).lean().exec();
@@ -136,13 +98,7 @@ export class UserService {
   }
 
   // // this function to get user by email
-  // async getUserByEmail(email: string): Promise<CreateUser> {
-  //   const foundUser = await this.userModel.findOne({ email }).exec();
-  //   if (!foundUser) {
-  //     throw new NotFoundException(`User with id ${email} not found`);
-  //   }
-  //   return foundUser;
-  // }
+
   async getUserByEmail(email: string): Promise<CreateUserDto> {
     try {
       const user = await this.userModel.findOne({ email }).lean().exec();
@@ -157,10 +113,21 @@ export class UserService {
       throw new Error(`Failed to get user by email: ${error.message}`);
     }
   }
-  // this function to delete user by id
-  // async deleteUser(id): Promise<void> {
-  //   const userDelete = await this.userModel.findByIdAndDelete(id);
-  // }
+  async VerifyEmail(email: string): Promise<CreateUserDto> {
+    try {
+      const user = await this.userModel.findOne({ email }).lean().exec();
+      if (!user) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to get user by email: ${error.message}`);
+    }
+  }
+// ############################
 
   async deleteUser(id: string): Promise<void> {
     try {

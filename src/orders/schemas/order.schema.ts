@@ -41,16 +41,8 @@ export class Order extends Document {
   };
 
   // Localization for shippingAddress
-  @Prop({
-    type: {
-      en: { type: String, required: true },
-      ar: { type: String, required: true },
-    },
-  })
-  shippingAddress: {
-    en: string;
-    ar: string;
-  };
+  @Prop({ required: true })
+  shippingAddress: string
 
  // Reference to the payment collection
  @Prop({ type: Types.ObjectId, ref: 'Payment', required: true })

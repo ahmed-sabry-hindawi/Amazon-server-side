@@ -9,9 +9,11 @@ import { Order, OrderSchema } from 'src/orders/schemas/order.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Cart.name, schema: CartSchema }]),
-    MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]), // Ensure this is included
-    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]), // Ensure this is included
+    MongooseModule.forFeature([
+      { name: Cart.name, schema: CartSchema },
+      { name: Product.name, schema: ProductSchema },
+      { name: Order.name, schema: OrderSchema },
+    ]),
   ],
   controllers: [CartsController],
   providers: [CartsService],

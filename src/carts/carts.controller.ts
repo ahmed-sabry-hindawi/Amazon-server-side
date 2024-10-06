@@ -18,30 +18,19 @@ import { Cart } from './schemas/cart.schema';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { Order } from 'src/orders/schemas/order.schema';
 import { Types } from 'mongoose';
+import { ProductItemDto } from 'src/orders/dto/Product-item.dto';
+import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
-  // Create a new cart
-  @Post()
-  @UseGuards(AuthenticationGuard)
-  async create(
-    @Request() req,
-    @Body() createCartDto: CreateCartDto,
-  ): Promise<Cart> {
-    try {
-      createCartDto.userId = req.user.id;
-      return await this.cartsService.create(createCartDto);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to create cart');
-    }
-  }
 
   // Add item to cart
   //done
   @Patch('user/add-item')
   @UseGuards(AuthenticationGuard)
+  @Roles('user')
   async addItem(@Request() req, @Body() addItemDto: AddItemDto): Promise<Cart> {
     try {
       const userId = req.user.id;
@@ -55,6 +44,7 @@ export class CartsController {
   //done
   @Patch('user/remove-item')
   @UseGuards(AuthenticationGuard)
+  @Roles('user')
   async removeItem(
     @Request() req,
     @Body() removeItemDto: RemoveItemDto,
@@ -84,6 +74,7 @@ export class CartsController {
   //done
   @Get('user')
   @UseGuards(AuthenticationGuard)
+  @Roles('user')
   async findByUserId(@Request() req): Promise<Cart> {
     try {
       const userId = req.user.id;
@@ -97,13 +88,14 @@ export class CartsController {
   // done 
   @Patch('user')
   @UseGuards(AuthenticationGuard)
+  @Roles('user')
   async updateByUserId(
     @Request() req,
-    @Body() updateCartDto: UpdateCartDto,
+    @Body() productItemDto: ProductItemDto,
   ): Promise<Cart> {
     try {
       const userId = req.user.id;
-      return await this.cartsService.updateByUserId(userId, updateCartDto);
+      return await this.cartsService.updateByUserId(userId, productItemDto);
     } catch (error) {
       throw new InternalServerErrorException('Failed to update cart');
     }

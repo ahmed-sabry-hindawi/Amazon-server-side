@@ -5,10 +5,9 @@ import { Cart } from './schemas/cart.schema';
 import { Product } from 'src/products/schemas/product.schema';
 import { Order } from 'src/orders/schemas/order.schema';
 import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
 import { AddItemDto } from './dto/add-item.dto';
-import { RemoveItemDto } from './dto/remove-item.dto';
 import { ProductItemDto } from 'src/orders/dto/Product-item.dto';
+import { ObjectId } from 'mongodb'; // Import ObjectId from the appropriate package
 
 @Injectable()
 export class CartsService {
@@ -27,14 +26,16 @@ export class CartsService {
       }
       return await this.cartModel.create(createCartDto);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to create cart');
+      throw new InternalServerErrorException(`Failed to create cart: ${error.message}`);
     }
   }
 
   // Get cart by user ID
   async findByUserId(userId: string): Promise<Cart> {
     try {
-      const cart = (await this.cartModel.findOne({ userId })).populate('userId');
+      const cart = await this.cartModel.findOne({ userId })
+        .populate('userId')
+        .populate({ path: 'items.productId', model: 'Product' }); // Populating productId within items array
       if (!cart) {
         throw new NotFoundException(`Cart for user ID ${userId} not found`);
       }
@@ -45,51 +46,40 @@ export class CartsService {
   }
 
   // Update cart by user ID
-  async updateByUserId(userId: string, updateCartDto: UpdateCartDto): Promise<Cart> {
+  async updateByUserId(userId: string, productItemDto: ProductItemDto): Promise<Cart> {
     try {
-      // Find the cart for the user
-      let cart = await this.cartModel.findOne({ userId });
+      // Ensure the cart exists
+      const cart = await this.cartModel.findOne({ userId });
       if (!cart) {
         throw new NotFoundException(`Cart for user ID ${userId} not found`);
       }
-  
-      // Check if the items array is provided in the update DTO
-      if (updateCartDto.items) {
-        for (const updateItem of updateCartDto.items) {
-          // Convert the productId to ObjectId
-          const productIdObjectId = new Types.ObjectId(updateItem.productId);
-  
-          // Find the existing item in the cart by productId (ObjectId comparison)
-          const existingItem = cart.items.find(item => item.productId.equals(productIdObjectId));
-  
-          // If the item exists, update its quantity; otherwise, add it as a new item
-          if (existingItem) {
-            existingItem.quantity = updateItem.quantity;
-          } else {
-            // Add the new item to the cart if it doesn't exist
-            cart.items.push({
-              productId: productIdObjectId, // Use ObjectId here
-              quantity: updateItem.quantity
-            });
-          }
-        }
+
+      // Find the product in the cart
+      const productId = new Types.ObjectId(productItemDto.productId);
+      const existingItemIndex = cart.items.findIndex(i => i.productId.equals(productId));
+
+      if (existingItemIndex > -1) {
+        // Update existing item quantity
+        cart.items[existingItemIndex].quantity = productItemDto.quantity;
+      } else {
+        // Add new item if it does not exist
+        cart.items.push({ productId, quantity: productItemDto.quantity });
       }
-  
-      // Recalculate the total price based on updated items
+
+      // Recalculate the total price
       cart.totalPrice = await this.calculateTotalPrice(
         cart.items.map(item => ({
           productId: item.productId.toString(),
           quantity: item.quantity,
         }))
       );
-  
-      // Save the updated cart and return it
+
+      // Save the updated cart
       return await cart.save();
     } catch (error) {
-      throw new InternalServerErrorException('Failed to update cart');
+      throw new InternalServerErrorException(`Failed to update cart: ${error.message}`);
     }
   }
-
 
   // Remove item from cart
   async removeItem(userId: string, productId: Types.ObjectId): Promise<Cart> {
@@ -111,7 +101,9 @@ export class CartsService {
   async addItem(userId: string, addItemDto: AddItemDto): Promise<Cart> {
     try {
       // Attempt to find the user's cart
-      let cart = await this.cartModel.findOne({ userId });
+      let cart = await this.cartModel.findOne({ userId })
+      .populate('userId')
+      .populate({ path: 'items.productId', model: 'Product' });
       
       // If no cart exists, create a new one
       if (!cart) {
@@ -124,7 +116,7 @@ export class CartsService {
       if (existingItem) {
         existingItem.quantity += addItemDto.quantity; // Update quantity
       } else {
-        cart.items.push({ productId, quantity: addItemDto.quantity }); // Add new item
+        cart.items.push({ productId: new ObjectId(productId), quantity: addItemDto.quantity }); // Add new item
       }
 
       const product = await this.productModel.findById(productId);
@@ -136,8 +128,6 @@ export class CartsService {
       throw new InternalServerErrorException('Failed to add item to cart');
     }
   }
-
-  
 
   // Checkout process
   // need to confirm
@@ -152,7 +142,7 @@ export class CartsService {
         userId,
         items: cart.items,
         totalPrice: cart.totalPrice,
-        shippingAddress: { en: 'Shipping address', ar: 'عنوان الشحن' },
+        shippingAddress: 'Shipping address' ,
         paymentId: new Types.ObjectId(), // Placeholder for payment ID
       });
 

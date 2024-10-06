@@ -11,6 +11,7 @@ export class CreateCartDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductItemDto)
+  @IsNotEmpty() // Ensure items are not empty
   items: ProductItemDto[];
 
   @IsOptional()

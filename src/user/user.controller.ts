@@ -46,7 +46,7 @@ export class UserController {
     return this._UserService.getUserById(userId);
   }
 
-    @Get('/:id')
+  @Get('/:id')
   @Roles('admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)

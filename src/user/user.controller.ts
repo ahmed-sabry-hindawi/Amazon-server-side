@@ -46,13 +46,13 @@ export class UserController {
     return this._UserService.getUserById(userId);
   }
 
-  @Get('/:id')
-  @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  @HttpCode(HttpStatus.FOUND)
-  findUser(@Param('id') id): Promise<UpdateUserDto> {
-    return this._UserService.getUserById(id);
-  }
+  // @Get('/:id')
+  // @Roles('admin')
+  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  // @HttpCode(HttpStatus.FOUND)
+  // findUser(@Param('id') id): Promise<UpdateUserDto> {
+  //   return this._UserService.getUserById(id);
+  // }
 
   @Post('register')
   @HttpCode(HttpStatus.OK)

@@ -63,7 +63,7 @@ export class UserController {
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() user: Login): Promise<{ token: string }> {
+  async login(@Body() user: Login): Promise<{ token: string,email:string,userName:string }> {
     return await this._AuthService.login(user);
   }
 

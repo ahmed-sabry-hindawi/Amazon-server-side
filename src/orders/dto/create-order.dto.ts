@@ -37,13 +37,8 @@ export class CreateOrderDto {
     ar: string;
   };
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => AddressDto)
-  shippingAddress: {
-    en: string;
-    ar: string;
-  };
+  @IsString()
+  shippingAddress: string;
 
   @IsNotEmpty()
   @IsMongoId()
@@ -58,11 +53,11 @@ class OrderStatusDto {
   ar: string;
 }
 
-class AddressDto {
-  @IsNotEmpty()
-  en: string;
+// class AddressDto {
+//   @IsNotEmpty()
+//   en: string;
 
-  @IsNotEmpty()
-  @IsString()
-  ar: string;
-}
+//   @IsNotEmpty()
+//   @IsString()
+//   ar: string;
+// }

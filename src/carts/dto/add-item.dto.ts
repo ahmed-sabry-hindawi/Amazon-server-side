@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 export class AddItemDto {
   @IsNotEmpty()
   @IsMongoId()
-  productId: Types.ObjectId;
+  productId: string; // Change to string
 
   @IsNotEmpty()
   @IsNumber()

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsMongoId, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsMongoId, IsNumber, Min } from 'class-validator';
 
 export class ProductItemDto {
   @IsNotEmpty()
@@ -7,5 +7,6 @@ export class ProductItemDto {
 
   @IsNotEmpty()
   @IsNumber()
+  @Min(1) // Ensure quantity is at least 1
   quantity: number;
 }

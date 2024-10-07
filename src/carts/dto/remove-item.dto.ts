@@ -4,5 +4,5 @@ import { Types } from 'mongoose';
 export class RemoveItemDto {
   @IsNotEmpty()
   @IsMongoId()
-  productId: Types.ObjectId;
+  productId: string;  // Changed from Types.ObjectId to string
 }

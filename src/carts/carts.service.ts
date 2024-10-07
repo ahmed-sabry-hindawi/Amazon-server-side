@@ -44,8 +44,7 @@ export class CartsService {
     try {
       const cart = await this.cartModel
         .findOne({ userId })
-        .populate('userId')
-        .populate({ path: 'items.productId', model: 'Product' }); // Populating productId within items array
+        .populate('userId').populate({ path: 'items.productId', model: 'Product' }); // Populating productId within items array
       if (!cart) {
         throw new NotFoundException(`Cart for user ID ${userId} not found`);
       }

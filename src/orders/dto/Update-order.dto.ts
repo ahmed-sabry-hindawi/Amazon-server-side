@@ -1,7 +1,17 @@
-import { IsOptional, IsArray, ValidateNested, IsEnum, IsObject, IsMongoId, IsNumber, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsObject,
+  IsMongoId,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
 import { ProductItemDto } from './Product-item.dto';
+
 export class UpdateOrderDto {
   @IsOptional()
   @IsMongoId()
@@ -23,7 +33,7 @@ export class UpdateOrderDto {
   @Type(() => OrderStatusDto)
   orderStatus?: {
     en?: OrderStatus; // Optional English status
-    ar?: string;     // Optional Arabic status
+    ar?: string; // Optional Arabic status
   };
 
   @IsOptional()

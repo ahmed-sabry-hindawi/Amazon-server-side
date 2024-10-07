@@ -45,7 +45,7 @@ export class Order extends Document {
   shippingAddress: string
 
  // Reference to the payment collection
- @Prop({ type: Types.ObjectId, ref: 'Payment', required: true })
+ @Prop({ type: Types.ObjectId, ref: 'Payment', required: false })
  paymentId: Types.ObjectId;
 
 }

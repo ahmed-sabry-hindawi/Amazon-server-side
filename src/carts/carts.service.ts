@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cart } from './schemas/cart.schema';
@@ -18,22 +22,28 @@ export class CartsService {
   ) {}
 
   // Create a new cart
+
   async create(createCartDto: CreateCartDto): Promise<Cart> {
     try {
-      const cart = await this.cartModel.findOne({ userId: createCartDto.userId });
+      const cart = await this.cartModel.findOne({
+        userId: createCartDto.userId,
+      });
       if (cart) {
         throw new Error('Cart already exists for this user');
       }
       return await this.cartModel.create(createCartDto);
     } catch (error) {
-      throw new InternalServerErrorException(`Failed to create cart: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to create cart: ${error.message}`,
+      );
     }
   }
 
   // Get cart by user ID
   async findByUserId(userId: string): Promise<Cart> {
     try {
-      const cart = await this.cartModel.findOne({ userId })
+      const cart = await this.cartModel
+        .findOne({ userId })
         .populate('userId')
         .populate({ path: 'items.productId', model: 'Product' }); // Populating productId within items array
       if (!cart) {
@@ -46,7 +56,10 @@ export class CartsService {
   }
 
   // Update cart by user ID
-  async updateByUserId(userId: string, productItemDto: ProductItemDto): Promise<Cart> {
+  async updateByUserId(
+    userId: string,
+    productItemDto: ProductItemDto,
+  ): Promise<Cart> {
     try {
       // Ensure the cart exists
       const cart = await this.cartModel.findOne({ userId });
@@ -56,7 +69,9 @@ export class CartsService {
 
       // Find the product in the cart
       const productId = new Types.ObjectId(productItemDto.productId);
-      const existingItemIndex = cart.items.findIndex(i => i.productId.equals(productId));
+      const existingItemIndex = cart.items.findIndex((i) =>
+        i.productId.equals(productId),
+      );
 
       if (existingItemIndex > -1) {
         // Update existing item quantity
@@ -68,16 +83,18 @@ export class CartsService {
 
       // Recalculate the total price
       cart.totalPrice = await this.calculateTotalPrice(
-        cart.items.map(item => ({
+        cart.items.map((item) => ({
           productId: item.productId.toString(),
           quantity: item.quantity,
-        }))
+        })),
       );
 
       // Save the updated cart
       return await cart.save();
     } catch (error) {
-      throw new InternalServerErrorException(`Failed to update cart: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to update cart: ${error.message}`,
+      );
     }
   }
 
@@ -85,12 +102,20 @@ export class CartsService {
   async removeItem(userId: string, productId: Types.ObjectId): Promise<Cart> {
     try {
       const cart = await this.cartModel.findOne({ userId });
-      if (!cart) throw new NotFoundException(`Cart for user ID ${userId} not found`);
+      if (!cart)
+        throw new NotFoundException(`Cart for user ID ${userId} not found`);
 
       // const productId = new Types.ObjectId(removeItemDto.productId);
-      cart.items = cart.items.filter(item => !item.productId.equals(productId));
+      cart.items = cart.items.filter(
+        (item) => !item.productId.equals(productId),
+      );
 
-      cart.totalPrice = await this.calculateTotalPrice(cart.items.map(item => ({ productId: item.productId.toString(), quantity: item.quantity })));
+      cart.totalPrice = await this.calculateTotalPrice(
+        cart.items.map((item) => ({
+          productId: item.productId.toString(),
+          quantity: item.quantity,
+        })),
+      );
       return await cart.save();
     } catch (error) {
       throw new InternalServerErrorException('Failed to remove item from cart');
@@ -101,26 +126,37 @@ export class CartsService {
   async addItem(userId: string, addItemDto: AddItemDto): Promise<Cart> {
     try {
       // Attempt to find the user's cart
-      let cart = await this.cartModel.findOne({ userId })
-      .populate('userId')
-      .populate({ path: 'items.productId', model: 'Product' });
-      
+      let cart = await this.cartModel
+        .findOne({ userId })
+        .populate('userId')
+        .populate({ path: 'items.productId', model: 'Product' });
+
       // If no cart exists, create a new one
       if (!cart) {
-        cart = await this.create({ userId, items: [], totalPrice: 0 } as CreateCartDto);
+        cart = await this.create({
+          userId,
+          items: [],
+          totalPrice: 0,
+        } as CreateCartDto);
       }
 
       const productId = addItemDto.productId;
-      const existingItem = cart.items.find(item => item.productId.equals(productId));
+      const existingItem = cart.items.find((item) =>
+        item.productId.equals(productId),
+      );
 
       if (existingItem) {
         existingItem.quantity += addItemDto.quantity; // Update quantity
       } else {
-        cart.items.push({ productId: new ObjectId(productId), quantity: addItemDto.quantity }); // Add new item
+        cart.items.push({
+          productId: new ObjectId(productId),
+          quantity: addItemDto.quantity,
+        }); // Add new item
       }
 
       const product = await this.productModel.findById(productId);
-      if (!product) throw new NotFoundException(`Product with ID ${productId} not found`);
+      if (!product)
+        throw new NotFoundException(`Product with ID ${productId} not found`);
 
       cart.totalPrice += addItemDto.quantity * product.price; // Update totalPrice
       return await cart.save();
@@ -142,7 +178,7 @@ export class CartsService {
         userId,
         items: cart.items,
         totalPrice: cart.totalPrice,
-        shippingAddress: 'Shipping address' ,
+        shippingAddress: 'Shipping address',
         paymentId: new Types.ObjectId(), // Placeholder for payment ID
       });
 

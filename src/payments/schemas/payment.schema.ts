@@ -1,8 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+}
 
 @Schema({ timestamps: true })
-export class Payment {
+export class Payment extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
@@ -16,14 +23,15 @@ export class Payment {
   paymentMethod: string;
 
   @Prop({
+    type: String,
+    enum: PaymentStatus,
     required: true,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending',
+    default: PaymentStatus.PENDING,
   })
-  status: string;
+  status: PaymentStatus;
 
   @Prop({ required: true })
-  transactionId: string; // Unique PayPal transaction ID
+  transactionId: string;
 
   @Prop({ type: Date, default: Date.now })
   paymentDate: Date;

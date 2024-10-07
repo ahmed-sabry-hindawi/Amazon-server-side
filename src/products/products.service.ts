@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './schemas/product.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
 
@@ -28,7 +28,7 @@ export class ProductsService {
       // Chain the populate method to the query before executing it
       const products = await this.productModel
         .find()
-        .populate(['sellerId', 'reviews', 'categoryId']) // Apply populate here
+        .populate(['sellerId', 'reviews', 'subcategoryId']) // Apply populate here
         .exec(); // Then execute the query
 
       if (!products) {
@@ -44,7 +44,7 @@ export class ProductsService {
     try {
       const product = await this.productModel
         .findById(productId)
-        .populate(['sellerId', 'reviews', 'categoryId'])
+        .populate(['sellerId', 'reviews', 'subcategoryId'])
         .exec();
       if (!product) {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
@@ -56,12 +56,27 @@ export class ProductsService {
     }
   }
 
-  async createProduct(product: CreateProductDto): Promise<Product> {
-    try {
-      const createdProduct = await this.productModel.create(product);
+  // async createProduct(product: CreateProductDto): Promise<Product> {
+  //   try {
+  //     const createdProduct = await this.productModel.create(product);
 
+  //     return createdProduct;
+  //   } catch (error) {
+  //     throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
+
+  async createProduct(
+    product: CreateProductDto,
+    sellerId: Types.ObjectId,
+  ): Promise<Product> {
+    try {
+      const newProduct = { ...product, sellerId }; // Assign sellerId to product
+      const createdProduct = await this.productModel.create(newProduct); // Save to DB
       return createdProduct;
     } catch (error) {
+      console.log('Seller ID:', sellerId); // Log sellerId for debugging if needed
+
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -203,9 +218,9 @@ export class ProductsService {
     }
   }
 
-  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+  async getProductsByCategory(subcategoryId: string): Promise<Product[]> {
     try {
-      const products = await this.productModel.find({ categoryId }).exec();
+      const products = await this.productModel.find({ subcategoryId }).exec();
       if (!products) {
         throw new HttpException(
           'No products found in this category',

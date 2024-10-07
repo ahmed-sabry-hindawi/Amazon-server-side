@@ -113,6 +113,10 @@ export class UserService {
       throw new Error(`Failed to get user by email: ${error.message}`);
     }
   }
+
+
+
+  
   async VerifyEmail(email: string): Promise<CreateUserDto> {
     try {
       const user = await this.userModel.findOne({ email }).lean().exec();

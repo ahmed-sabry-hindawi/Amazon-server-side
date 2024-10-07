@@ -1,7 +1,7 @@
-import { UpdateCategory } from './update-category';
+import { UpdateCategoryDto } from './update-category';
 
 describe('UpdateCategory', () => {
   it('should be defined', () => {
-    expect(new UpdateCategory()).toBeDefined();
+    expect(new UpdateCategoryDto()).toBeDefined();
   });
 });

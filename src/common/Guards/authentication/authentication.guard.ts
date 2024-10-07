@@ -12,7 +12,7 @@ export class AuthenticationGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization;
     if (!token) {
-      throw new UnauthorizedException('you maut login First ');
+      throw new UnauthorizedException('you must login First ');
     }
     try {
       const decoded = this._JwtService.verify(token, {

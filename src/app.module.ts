@@ -5,13 +5,16 @@ import { AppService } from './app.service';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PaymentsModule } from './payments/payments.module';
-import { MongooseModule } from '@nestjs/mongoose';
 import { SubCategoryModule } from './sub-category/sub-category.module';
-
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { OrdersModule } from './orders/orders.module';
+import { CartsModule } from './carts/carts.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ShippingModule } from './shipping/shipping.module';
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
       useFactory: (configService: ConfigService) => {
         return {
           secret: configService.get('JWT_SECRET'),
-          signOptions: { expiresIn: '3h' },
+          signOptions: { expiresIn: '1d' },
         };
       },
       global: true,
@@ -33,8 +36,6 @@ import { JwtModule } from '@nestjs/jwt';
       useFactory: async (_configService: ConfigService) => {
         return {
           uri: _configService.get('MONGO_URI'),
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
         };
       },
     }),
@@ -50,6 +51,10 @@ import { JwtModule } from '@nestjs/jwt';
     CategoriesModule,
     PaymentsModule,
     SubCategoryModule,
+    OrdersModule,
+    ReviewsModule,
+    CartsModule,
+    ShippingModule
   ],
 
   controllers: [AppController],

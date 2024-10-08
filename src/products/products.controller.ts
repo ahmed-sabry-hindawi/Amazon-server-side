@@ -43,9 +43,32 @@ export class ProductsController {
 
   @Get('filter')
   async getProductsWithFiltering(
-    @Query() filters: { [key: string]: any },
+    @Query() x: { [key: string]: any },
   ): Promise<Product[]> {
-    return this.productsService.getProductsWithFiltering(filters);
+    console.log(x);
+
+    return this.productsService.getProductsWithFiltering(x);
+  }
+  /************************************************************************* */
+  @Get('filterCatName')
+  async getProductsBySubcategoryIdAndName(
+    @Query('subcategoryId') subcategoryId: string,
+    @Query('name') name: string,
+  ): Promise<Product[]> {
+    if (!subcategoryId || !name) {
+      throw new BadRequestException(
+        'Both subcategoryId and name are required.',
+      );
+    }
+    console.log(
+      `Searching for products with subcategoryId: ${subcategoryId} and name: ${name}`,
+    );
+    const products = await this.productsService.findBySubcategoryIdAndName(
+      subcategoryId,
+      name,
+    );
+    console.log(`Found ${products.length} products`);
+    return products;
   }
 
   // @Get('advanced-filter')

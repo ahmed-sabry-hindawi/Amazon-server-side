@@ -292,6 +292,42 @@ export class ProductsService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  async findBySubcategoryIdAndName(
+    subcategoryId: string,
+    name: string,
+  ): Promise<Product[]> {
+    try {
+      console.log(
+        `Searching for products with subcategoryId: ${subcategoryId} and name: ${name}`,
+      );
+
+      const query = {
+        subcategoryId: subcategoryId, // Changed from new Types.ObjectId(subcategoryId)
+        $or: [
+          { 'name.en': { $regex: name, $options: 'i' } },
+          { 'name.ar': { $regex: name, $options: 'i' } },
+        ],
+      };
+
+      console.log('Query:', JSON.stringify(query, null, 2));
+
+      const products = await this.productModel.find(query).exec();
+
+      console.log(`Found ${products.length} products`);
+      if (products.length === 0) {
+        console.log(
+          'No products found. Dumping first 5 products in the database:',
+        );
+        const sampleProducts = await this.productModel.find().limit(5).exec();
+        console.log(JSON.stringify(sampleProducts, null, 2));
+      }
+
+      return products;
+    } catch (error) {
+      console.error('Error in findBySubcategoryIdAndName:', error);
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   // async getProductsWithAdvancedFiltering(
   //   filters: { [key: string]: any },

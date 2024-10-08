@@ -48,19 +48,33 @@ export class ProductsController {
     return this.productsService.getProductsWithFiltering(filters);
   }
 
-  @Get('advanced-filter')
+  // @Get('advanced-filter')
+  // async getProductsWithAdvancedFiltering(
+  //   @Query('filters') filters: { [key: string]: any },
+  //   @Query('pagination') pagination: { page: number; limit: number },
+  //   @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
+  // ): Promise<{ products: Product[]; totalCount: number }> {
+  //   return this.productsService.getProductsWithAdvancedFiltering(
+  //     filters,
+  //     pagination,
+  //     sorting,
+  //   );
+  // }
+
+    @Get('advanced-filter')
   async getProductsWithAdvancedFiltering(
     @Query('filters') filters: { [key: string]: any },
     @Query('pagination') pagination: { page: number; limit: number },
     @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
   ): Promise<{ products: Product[]; totalCount: number }> {
+    // Ensure filters and sorting are properly structured
     return this.productsService.getProductsWithAdvancedFiltering(
       filters,
       pagination,
       sorting,
     );
   }
-
+  
   @Get('search')
   async getProductsBySearchQuery(
     @Query('query') query: string,

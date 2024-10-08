@@ -292,22 +292,28 @@ export class ProductsService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
   async findBySubcategoryIdAndName(
-    subcategoryId: string,
-    name: string,
+    subcategoryId?: string,
+    name?: string,
   ): Promise<Product[]> {
     try {
       console.log(
-        `Searching for products with subcategoryId: ${subcategoryId} and name: ${name}`,
+        `Searching for products with subcategoryId: ${subcategoryId || 'not provided'} and name: ${name || 'not provided'}`,
       );
 
-      const query = {
-        subcategoryId: subcategoryId, // Changed from new Types.ObjectId(subcategoryId)
-        $or: [
+      const query: any = {};
+
+      if (subcategoryId) {
+        query.subcategoryId = subcategoryId;
+      }
+
+      if (name) {
+        query.$or = [
           { 'name.en': { $regex: name, $options: 'i' } },
           { 'name.ar': { $regex: name, $options: 'i' } },
-        ],
-      };
+        ];
+      }
 
       console.log('Query:', JSON.stringify(query, null, 2));
 

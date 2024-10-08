@@ -293,25 +293,64 @@ export class ProductsService {
     }
   }
 
-  async getProductsWithAdvancedFiltering(
+  // async getProductsWithAdvancedFiltering(
+  //   filters: { [key: string]: any },
+  //   pagination: { page: number; limit: number },
+  //   sorting: { sortBy: string; order: 'asc' | 'desc' },
+  // ): Promise<{ products: Product[]; totalCount: number }> {
+  //   try {
+  //     const totalCount = await this.productModel.countDocuments(filters).exec();
+  //     const products = await this.productModel
+  //       .find(filters)
+  //       .sort({ [sorting.sortBy]: sorting.order })
+  //       .skip((pagination.page - 1) * pagination.limit)
+  //       .limit(pagination.limit)
+  //       .exec();
+  //     return { products, totalCount };
+  //   } catch (error) {
+  //     throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
+
+ async getProductsWithAdvancedFiltering(
     filters: { [key: string]: any },
     pagination: { page: number; limit: number },
     sorting: { sortBy: string; order: 'asc' | 'desc' },
   ): Promise<{ products: Product[]; totalCount: number }> {
     try {
+      // Validate pagination
+      if (pagination.page < 1 || pagination.limit < 1) {
+        throw new HttpException('Invalid pagination values', HttpStatus.BAD_REQUEST);
+      }
+
+      // Validate sorting
+      const validSortFields = ['name', 'price', 'createdAt', 'updatedAt']; // Add valid sort fields here
+      if (!validSortFields.includes(sorting.sortBy)) {
+        throw new HttpException(`Invalid sort field: ${sorting.sortBy}`, HttpStatus.BAD_REQUEST);
+      }
+      if (!['asc', 'desc'].includes(sorting.order)) {
+        throw new HttpException(`Invalid sort order: ${sorting.order}`, HttpStatus.BAD_REQUEST);
+      }
+
+      // Count total documents matching filters
       const totalCount = await this.productModel.countDocuments(filters).exec();
+
+      // Retrieve products with filtering, sorting, and pagination
       const products = await this.productModel
         .find(filters)
         .sort({ [sorting.sortBy]: sorting.order })
         .skip((pagination.page - 1) * pagination.limit)
         .limit(pagination.limit)
         .exec();
+
       return { products, totalCount };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
+
+  
   async filterProductsByPrice() {
     try {
       const products = await this.productModel

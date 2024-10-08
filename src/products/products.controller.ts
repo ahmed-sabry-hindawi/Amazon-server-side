@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Param,
   Post,
   Put,
@@ -50,25 +51,29 @@ export class ProductsController {
     return this.productsService.getProductsWithFiltering(x);
   }
   /************************************************************************* */
+
   @Get('filterCatName')
-  async getProductsBySubcategoryIdAndName(
-    @Query('subcategoryId') subcategoryId: string,
-    @Query('name') name: string,
+  async filterCatName(
+    @Query('subcategoryId') subcategoryId?: string,
+    @Query('name') name?: string,
   ): Promise<Product[]> {
-    if (!subcategoryId || !name) {
+    if (!subcategoryId && !name) {
       throw new BadRequestException(
-        'Both subcategoryId and name are required.',
+        'At least one of subcategoryId or name must be provided',
       );
     }
-    console.log(
-      `Searching for products with subcategoryId: ${subcategoryId} and name: ${name}`,
-    );
-    const products = await this.productsService.findBySubcategoryIdAndName(
-      subcategoryId,
-      name,
-    );
-    console.log(`Found ${products.length} products`);
-    return products;
+
+    try {
+      const products = await this.productsService.findBySubcategoryIdAndName(
+        subcategoryId,
+        name,
+      );
+      return products;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while filtering products',
+      );
+    }
   }
 
   // @Get('advanced-filter')

@@ -137,6 +137,25 @@ export class ProductsController {
     return this.productsService.getAllProducts();
   }
 
+  @Get('filtered')
+  async getFilteredProducts(
+    @Query('categoryId') categoryId?: string,
+    @Query('brand') brand?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('sortBy') sortBy: 'price' | 'name' = 'price',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
+  ): Promise<Product[]> {
+    return this.productsService.getFilteredProducts(
+      categoryId,
+      brand,
+      minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice ? parseFloat(maxPrice) : undefined,
+      sortBy,
+      sortOrder,
+    );
+  }
+
   @Get(':id')
   async getProductById(@Param('id') productId: string): Promise<Product> {
     return this.productsService.getProductById(productId);

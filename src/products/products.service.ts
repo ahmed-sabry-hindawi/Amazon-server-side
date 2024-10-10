@@ -220,7 +220,9 @@ export class ProductsService {
 
   async getProductsByCategory(subcategoryId: string): Promise<Product[]> {
     try {
-      const products = await this.productModel.find({ subcategoryId }).exec();
+      const products = await this.productModel
+        .find({ subcategoryId })
+        .populate('subcategoryId');
       if (!products) {
         throw new HttpException(
           'No products found in this category',
@@ -438,4 +440,39 @@ export class ProductsService {
     }
   }
   */
+
+  async getFilteredProducts(
+    categoryId?: string,
+    brand?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    sortBy: 'price' | 'name' = 'price',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ): Promise<Product[]> {
+    try {
+      let query = this.productModel.find();
+
+      if (categoryId) {
+        query = query.where('subcategoryId', categoryId);
+      }
+
+      if (brand) {
+        query = query.where('brand', brand);
+      }
+
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        let priceQuery = {};
+        if (minPrice !== undefined) priceQuery['$gte'] = minPrice;
+        if (maxPrice !== undefined) priceQuery['$lte'] = maxPrice;
+        query = query.where('price', priceQuery);
+      }
+
+      query = query.sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });
+
+      const products = await query.populate('subcategoryId').exec();
+      return products;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

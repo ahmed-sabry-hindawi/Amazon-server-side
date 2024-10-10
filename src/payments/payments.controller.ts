@@ -58,4 +58,14 @@ export class PaymentsController {
     const userId = req.user.id;
     return this.paymentService.getPaymentHistory(userId);
   }
+
+  @Post('cash-on-delivery')
+  @UseGuards(AuthenticationGuard)
+  async createCashOnDeliveryPayment(
+    @Req() req,
+    @Body('amount') amount: number,
+  ) {
+    const userId = req.user.id;
+    return this.paymentService.createCashOnDeliveryPayment(userId, amount);
+  }
 }

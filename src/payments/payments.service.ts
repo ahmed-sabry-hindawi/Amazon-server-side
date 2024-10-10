@@ -118,4 +118,18 @@ export class PaymentService {
   private async updatePaymentStatus(orderId: string, status: PaymentStatus) {
     await this.paymentModel.findOneAndUpdate({ orderId }, { status }).exec();
   }
+
+  async createCashOnDeliveryPayment(
+    userId: string,
+    amount: number,
+  ): Promise<Payment> {
+    const payment = new this.paymentModel({
+      userId,
+      amount,
+      paymentMethod: 'cash_on_delivery',
+      status: PaymentStatus.PENDING,
+      transactionId: `COD-${Date.now()}`, // Generate a unique transaction ID for COD
+    });
+    return await payment.save();
+  }
 }

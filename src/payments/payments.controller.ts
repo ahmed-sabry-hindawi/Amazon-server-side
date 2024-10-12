@@ -29,8 +29,9 @@ export class PaymentsController {
   }
 
   @Post('capture/:orderId')
-  async capturePayment(@Param('orderId') orderId: string) {
-    return this.paymentService.capturePayment(orderId);
+  async capturePayment(@Param('orderId') orderId: string, @Req() req) {
+    const userId = req.user.id;
+    return this.paymentService.capturePayment(orderId, userId);
   }
 
   @UseGuards(AuthorizationGuard)
@@ -57,5 +58,15 @@ export class PaymentsController {
   async getPaymentHistory(@Req() req) {
     const userId = req.user.id;
     return this.paymentService.getPaymentHistory(userId);
+  }
+
+  @Post('cash-on-delivery')
+  @UseGuards(AuthenticationGuard)
+  async createCashOnDeliveryPayment(
+    @Req() req,
+    @Body('amount') amount: number,
+  ) {
+    const userId = req.user.id;
+    return this.paymentService.createCashOnDeliveryPayment(userId, amount);
   }
 }

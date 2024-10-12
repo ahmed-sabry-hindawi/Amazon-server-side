@@ -22,9 +22,19 @@ export class User {
     default: 'user',
   })
   role: string;
+  @Prop({ required: false })
+  verificationToken: string;
 
   @Prop({ default: true })
   isActive: boolean;
+  @Prop({ default: false })
+  isVerified: boolean;
+
+  @Prop()
+  resetPasswordToken: string;
+
+  @Prop()
+  resetPasswordExpires: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

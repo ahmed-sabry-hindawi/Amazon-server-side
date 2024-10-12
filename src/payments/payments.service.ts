@@ -56,7 +56,12 @@ export class PaymentService {
     }
   }
 
-  async capturePayment(orderId: string) {
+  async capturePayment(orderId: string, userId: string) {
+    const payment = await this.paymentModel.findOne({ orderId, userId });
+    if (!payment) {
+      throw new BadRequestException('Payment not found or unauthorized');
+    }
+
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
 
     try {

@@ -29,8 +29,9 @@ export class PaymentsController {
   }
 
   @Post('capture/:orderId')
-  async capturePayment(@Param('orderId') orderId: string) {
-    return this.paymentService.capturePayment(orderId);
+  async capturePayment(@Param('orderId') orderId: string, @Req() req) {
+    const userId = req.user.id;
+    return this.paymentService.capturePayment(orderId, userId);
   }
 
   @UseGuards(AuthorizationGuard)

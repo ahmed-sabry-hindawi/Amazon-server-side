@@ -28,7 +28,7 @@ export class EmailService {
           <p>Hello ${to},</p>
           <p>Thank you for signing up. To complete your registration, please verify your email address by clicking the button below:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="http://localhost:3000/signin?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Verify Email Address</a>
+            <a href="http://localhost:3000/verifyEmail?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Verify Email Address</a>
           </div>
           <p>If you didn't create an account, you can safely ignore this email.</p>
           <p>Best regards,<br>Your Company Team</p>
@@ -50,7 +50,7 @@ export class EmailService {
           <p>Hello,</p>
           <p>We received a request to reset the password for your account. To proceed with resetting your password, please click the button below:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="http://your-domain.com/reset-password?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Reset Password</a>
+            <a href="http://your-domain.com/resetPassword?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Reset Password</a>
           </div>
           <p>If you didn't request a password reset, you can safely ignore this email.</p>
           <p>Best regards,<br>Your Company Team</p>

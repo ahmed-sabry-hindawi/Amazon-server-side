@@ -37,7 +37,7 @@ export class UserController {
   }
 
   @Get('/:id')
-  @Roles('user','admin')
+  @Roles('user', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
   findUser(@Param('id') id): Promise<UpdateUserDto> {
@@ -51,33 +51,41 @@ export class UserController {
   }
   @Post('verifyEmail')
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Body('email')  email: string ) {
-    const user = await this._UserService.getUserByEmail(email);
-    if (!user) {
-      throw new NotFoundException('Email does not exist');
+  async verifyEmail(
+    @Body('email') email?: string,
+    @Body('token') token?: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.verifyEmail(email, token);
+    if (token) {
+      return { message: 'Email verified successfully' };
+    } else {
+      return { message: 'Email is already verified, you can log in' };
     }
-    return { message: 'Email verified, proceed to step 2' };
   }
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() user: Login): Promise<{ token: string,email:string,userName:string }> {
+  async login(
+    @Body() user: Login,
+  ): Promise<{ token: string; email: string; userName: string }> {
     return await this._AuthService.login(user);
   }
 
   @Patch('update/password')
-  @Roles('user','admin')
+  @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updatePassword(
     @Request() req,
-    @Body('newPassword') newPassword: string, // Properly extract the newPassword from the request body
-  ): Promise<any> {
-    const userId = req.user.id; // Get user ID from the authenticated user
-    console.log(userId);
-    console.log(req.user.role);
-
-    await this._UserService.updateUserPassword(userId, newPassword);
+    @Body('oldPassword') oldPassword: string,
+    @Body('newPassword') newPassword: string,
+  ): Promise<{ message: string }> {
+    const userId = req.user.id;
+    await this._UserService.updateUserPassword(
+      userId,
+      oldPassword,
+      newPassword,
+    );
     return { message: 'Password updated successfully' };
   }
 
@@ -89,7 +97,7 @@ export class UserController {
     return this._UserService.deleteUser(id);
   }
   @Patch('/:id')
-  @Roles('user','admin')
+  @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   UpdateUserDto(
@@ -97,5 +105,24 @@ export class UserController {
     @Body() userData: UpdateUserDto,
   ): Promise<UpdateUserDto> {
     return this._UserService.updateUserById(id, userData);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Body('email') email: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.initiatePasswordReset(email);
+    return { message: 'Password reset email sent successfully' };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.resetPassword(token, newPassword);
+    return { message: 'Password reset successfully' };
   }
 } // class

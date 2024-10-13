@@ -14,6 +14,7 @@ import * as crypto from 'crypto';
 import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
 import { CreateUserDto } from './Dtos/createUser.dtos';
 import { EmailService } from 'src/email/email.service';
+import { error } from 'console';
 
 @Injectable()
 export class UserService {
@@ -52,11 +53,16 @@ export class UserService {
         verificationToken,
         isVerified: false,
       });
-
-      await this.emailService.sendVerificationEmail(
+try{  await this.emailService.sendVerificationEmail(
         userData.email as string,
         verificationToken,
-      );
+      )}catch (error) {
+        if (error instanceof ConflictException) {
+          throw error;
+        }
+        throw new Error(`this Error form send email : ${error.message}`);
+      }
+    
 
       return await newUser.save();
     } catch (error) {

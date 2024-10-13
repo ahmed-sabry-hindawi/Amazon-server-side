@@ -147,7 +147,7 @@ try{  await this.emailService.sendVerificationEmail(
     }
   }
 
-  async verifyEmail(email?: string, token?: string): Promise<void> {
+  async verifyEmail(email?: string, token?: string): Promise<UpdateUserDto> {
     if (token) {
       // User is logging in for the first time
       const user = await this.userModel.findOne({ verificationToken: token });
@@ -158,6 +158,7 @@ try{  await this.emailService.sendVerificationEmail(
       user.isVerified = true;
       user.verificationToken = undefined;
       await user.save();
+      return user
     } else if (email) {
       // User has registered before
       const user = await this.userModel.findOne({ email });
@@ -170,6 +171,7 @@ try{  await this.emailService.sendVerificationEmail(
           'Please verify your email before logging in',
         );
       }
+      return user
     } else {
       throw new BadRequestException(
         'Either email or verification token must be provided',

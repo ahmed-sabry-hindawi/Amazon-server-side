@@ -65,12 +65,12 @@ export class UserController {
   async verifyEmail(
     @Body('email') email?: string,
     @Body('token') token?: string,
-  ): Promise<{ message: string }> {
-    await this._UserService.verifyEmail(email, token);
+  ): Promise<{ message: string ,userData:any }> {
+   let user= await this._UserService.verifyEmail(email, token);
     if (token) {
-      return { message: 'Email verified successfully' };
+      return { message: 'Email verified successfully',userData:user };
     } else {
-      return { message: 'Email is already verified, you can log in' };
+      return { message: 'Email is already verified, you can log in',userData:'Not Found any user ' };
     }
   }
 

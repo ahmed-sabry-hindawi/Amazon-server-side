@@ -56,16 +56,51 @@ export class PaymentService {
     }
   }
 
-  async capturePayment(orderId: string) {
+  async capturePayment(orderId: string, userId: string, retryCount = 0) {
+    const payment = await this.paymentModel.findOne({ orderId, userId });
+    if (!payment) {
+      throw new BadRequestException('Payment not found or unauthorized');
+    }
+
+    if (payment.status === PaymentStatus.COMPLETED) {
+      throw new BadRequestException('Payment has already been captured');
+    }
+
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
 
     try {
       const response = await this.payPalClient.execute(request);
-      await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
-      return response.result;
+
+      if (response.result.status === 'COMPLETED') {
+        await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
+        return response.result;
+      } else {
+        throw new BadRequestException(
+          `Unexpected payment status: ${response.result.status}`,
+        );
+      }
     } catch (error) {
+      if (error.statusCode === 422) {
+        await this.updatePaymentStatus(orderId, PaymentStatus.FAILED);
+        console.error(
+          `Compliance issue detected for order ${orderId}:`,
+          JSON.stringify(error, null, 2),
+        );
+        throw new BadRequestException(
+          'Payment capture failed due to a compliance issue. Please try using a different payment method or contact our support team for assistance.',
+        );
+      } else if (retryCount < 3) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * (retryCount + 1)),
+        );
+        return this.capturePayment(orderId, userId, retryCount + 1);
+      }
+      console.error(
+        `PayPal Payment Capture Error for order ${orderId}:`,
+        JSON.stringify(error, null, 2),
+      );
       throw new BadRequestException(
-        `PayPal Payment Capture Error: ${error.message}`,
+        'Payment capture failed. Please try again later or contact our support team for assistance.',
       );
     }
   }
@@ -87,7 +122,12 @@ export class PaymentService {
     }
   }
 
-  async cancelPayment(orderId: string) {
+  async cancelPayment(orderId: string, userId: string) {
+    const payment = await this.paymentModel.findOne({ orderId, userId });
+    if (!payment) {
+      throw new BadRequestException('Payment not found or unauthorized');
+    }
+
     const cancelRequest = new paypal.orders.OrdersVoidRequest(orderId);
     try {
       const response = await this.payPalClient.execute(cancelRequest);
@@ -98,10 +138,12 @@ export class PaymentService {
     }
   }
 
-  async getPaymentStatus(paymentId: string) {
-    const payment = await this.paymentModel.findById(paymentId).exec();
+  async getPaymentStatus(paymentId: string, userId: string) {
+    const payment = await this.paymentModel
+      .findOne({ _id: paymentId, userId })
+      .exec();
     if (!payment) {
-      throw new BadRequestException('Payment not found');
+      throw new BadRequestException('Payment not found or unauthorized');
     }
     return payment.status;
   }
@@ -117,5 +159,19 @@ export class PaymentService {
 
   private async updatePaymentStatus(orderId: string, status: PaymentStatus) {
     await this.paymentModel.findOneAndUpdate({ orderId }, { status }).exec();
+  }
+
+  async createCashOnDeliveryPayment(
+    userId: string,
+    amount: number,
+  ): Promise<Payment> {
+    const payment = new this.paymentModel({
+      userId,
+      amount,
+      paymentMethod: 'cash_on_delivery',
+      status: PaymentStatus.PENDING,
+      transactionId: `COD-${Date.now()}`, // Generate a unique transaction ID for COD
+    });
+    return await payment.save();
   }
 }

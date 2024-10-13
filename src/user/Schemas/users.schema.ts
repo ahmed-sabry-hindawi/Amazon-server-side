@@ -7,7 +7,7 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true }) // إضافة timestamps
 export class User {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true})
   name: string;
 
   @Prop({ required: true, unique: true })

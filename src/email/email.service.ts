@@ -14,24 +14,30 @@ export class EmailService {
         user: this.configService.get<string>('GMAIL_USER'),
         pass: this.configService.get<string>('GMAIL_PASS'),
       },
+      // tls: {
+      //   rejectUnauthorized: false, // If you're having issues with self-signed certs }
+      // },
+      // secure: true,
+      // port: 465,
+      // host: 'smtp.gmail.com',
     });
   }
 
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const mailOptions = {
-      from: 'Your Company <samman66512@gmail.com>',
+      from: ' Amazon Website <samman66512@gmail.com>',
       to: to,
       subject: 'Verify Your Email Address',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #232f3e;">Welcome to Our Website!</h2>
+          <h2 style="color: #232f3e;">Welcome to Amazon !</h2>
           <p>Hello ${to},</p>
           <p>Thank you for signing up. To complete your registration, please verify your email address by clicking the button below:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="http://localhost:3000/signin?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Verify Email Address</a>
           </div>
           <p>If you didn't create an account, you can safely ignore this email.</p>
-          <p>Best regards,<br>Your Company Team</p>
+          <p>Best regards,<br>Your Amazon Team</p>
         </div>
       `,
     };
@@ -41,19 +47,21 @@ export class EmailService {
 
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
     const mailOptions = {
-      from: 'Your Company <samman66512@gmail.com>',
+      from: ' Amazon Website <samman66512@gmail.com>',
       to: to,
       subject: 'Password Reset Request',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #232f3e;">Password Reset Request</h2>
-          <p>Hello,</p>
+          <h2 style="color: #232f3e;">Welcome to Amazon !</h2>
+
+          <h4 style="color: #232f3e;">Password Reset Request</h4>
+          <p>Hello ${to},</p>
           <p>We received a request to reset the password for your account. To proceed with resetting your password, please click the button below:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="http://your-domain.com/reset-password?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Reset Password</a>
+            <a href="http://localhost:3000/ResetPassword?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Reset Password</a>
           </div>
           <p>If you didn't request a password reset, you can safely ignore this email.</p>
-          <p>Best regards,<br>Your Company Team</p>
+          <p>Best regards,<br>Amazon Team</p>
         </div>
       `,
     };

@@ -1,21 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { RefundPaymentDto } from './dto/refund-payment/refund-payment.dto';
+import { CreatePaymentDto } from './dto/create-payment/create-payment';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import * as paypal from '@paypal/checkout-server-sdk';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Payment } from './schemas/payment.schema';
+import { Payment, PaymentStatus } from './schemas/payment.schema';
 
 @Injectable()
 export class PaymentService {
   private payPalClient: paypal.core.PayPalHttpClient;
 
   constructor(
-    private configService: ConfigService,
-    @InjectModel(Payment.name) private paymentModel: Model<Payment>,
+    private readonly configService: ConfigService,
+    @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
   ) {
     const environment = new paypal.core.SandboxEnvironment(
-      this.configService.get('PAYPAL_CLIENT_ID'),
-      this.configService.get('PAYPAL_CLIENT_SECRET'),
+      this.configService.get<string>('PAYPAL_CLIENT_ID'),
+      this.configService.get<string>('PAYPAL_CLIENT_SECRET'),
     );
     this.payPalClient = new paypal.core.PayPalHttpClient(environment);
   }
@@ -38,12 +40,19 @@ export class PaymentService {
       const response = await this.payPalClient.execute(request);
       const orderId = response.result.id;
 
-      // تخزين بيانات الدفع في الـ database
-      await this.storePayment(userId, orderId, amount, orderId, 'pending');
+      await this.storePayment({
+        userId,
+        orderId,
+        amount,
+        transactionId: orderId,
+        status: PaymentStatus.PENDING,
+      });
 
       return response.result;
     } catch (error) {
-      throw new Error(`PayPal Payment Creation Error: ${error.message}`);
+      throw new BadRequestException(
+        `PayPal Payment Creation Error: ${error.message}`,
+      );
     }
   }
 
@@ -52,43 +61,21 @@ export class PaymentService {
 
     try {
       const response = await this.payPalClient.execute(request);
-      // تحديث حالة الدفع بعد الالتقاط
-      await this.paymentModel
-        .findOneAndUpdate({ orderId }, { status: 'completed' })
-        .exec();
-
+      await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
       return response.result;
     } catch (error) {
-      throw new Error(`PayPal Payment Capture Error: ${error.message}`);
+      throw new BadRequestException(
+        `PayPal Payment Capture Error: ${error.message}`,
+      );
     }
   }
 
-  async storePayment(
-    userId: string,
-    orderId: string,
-    amount: number,
-    transactionId: string,
-    status: string,
-  ) {
-    const newPayment = new this.paymentModel({
-      userId,
-      orderId,
-      amount,
-      transactionId,
-      status,
-      paymentMethod: 'paypal',
-    });
-
-    return await newPayment.save();
-  }
-
-  // استرداد الأموال
-  async refundPayment(paymentId: string, amount: number, currency: string) {
+  async refundPayment(paymentId: string, refundDto: RefundPaymentDto) {
     const refundRequest = new paypal.payments.CapturesRefundRequest(paymentId);
     refundRequest.requestBody({
       amount: {
-        value: amount.toFixed(2),
-        currency_code: currency,
+        value: refundDto.amount.toFixed(2),
+        currency_code: refundDto.currency,
       },
     });
 
@@ -96,37 +83,39 @@ export class PaymentService {
       const refund = await this.payPalClient.execute(refundRequest);
       return refund.result;
     } catch (error) {
-      throw new Error(`Refund Error: ${error.message}`);
+      throw new BadRequestException(`Refund Error: ${error.message}`);
     }
   }
 
-  // إلغاء الدفع
   async cancelPayment(orderId: string) {
     const cancelRequest = new paypal.orders.OrdersVoidRequest(orderId);
     try {
       const response = await this.payPalClient.execute(cancelRequest);
-
-      await this.paymentModel
-        .findOneAndUpdate({ orderId }, { status: 'canceled' })
-        .exec();
-
+      await this.updatePaymentStatus(orderId, PaymentStatus.FAILED);
       return response.result;
     } catch (error) {
-      throw new Error(`Cancel Payment Error: ${error.message}`);
+      throw new BadRequestException(`Cancel Payment Error: ${error.message}`);
     }
   }
 
-  // الحصول على حالة الدفع
   async getPaymentStatus(paymentId: string) {
     const payment = await this.paymentModel.findById(paymentId).exec();
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new BadRequestException('Payment not found');
     }
     return payment.status;
   }
 
-  // الحصول على سجل المدفوعات
   async getPaymentHistory(userId: string) {
     return await this.paymentModel.find({ userId }).exec();
+  }
+
+  private async storePayment(createPaymentDto: CreatePaymentDto) {
+    const newPayment = new this.paymentModel(createPaymentDto);
+    return await newPayment.save();
+  }
+
+  private async updatePaymentStatus(orderId: string, status: PaymentStatus) {
+    await this.paymentModel.findOneAndUpdate({ orderId }, { status }).exec();
   }
 }

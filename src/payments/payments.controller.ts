@@ -5,30 +5,29 @@ import {
   Param,
   Post,
   Req,
-  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { PaymentService } from './payments.service';
+import { RefundPaymentDto } from './dto/refund-payment/refund-payment.dto';
 
 @Controller('payments')
 @UseGuards(AuthenticationGuard)
 export class PaymentsController {
   constructor(private readonly paymentService: PaymentService) {}
-
+  @Roles('user')
   @Post('create')
   async createPayment(
-    @Request() req,
+    @Req() req,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
   ) {
-    const userId = req.user.id || req.user.userId;
+    const userId = req.user.id;
     return this.paymentService.createPayment(userId, amount, currency);
   }
 
-  // التقاط دفعة
   @Post('capture/:orderId')
   async capturePayment(@Param('orderId') orderId: string) {
     return this.paymentService.capturePayment(orderId);
@@ -39,28 +38,24 @@ export class PaymentsController {
   @Post('refund/:paymentId')
   async refundPayment(
     @Param('paymentId') paymentId: string,
-    @Body('amount') amount: number,
-    @Body('currency') currency: string,
+    @Body() refundPaymentDto: RefundPaymentDto,
   ) {
-    return this.paymentService.refundPayment(paymentId, amount, currency);
+    return this.paymentService.refundPayment(paymentId, refundPaymentDto);
   }
 
-  // إلغاء دفعة
   @Post('cancel/:orderId')
   async cancelPayment(@Param('orderId') orderId: string) {
     return this.paymentService.cancelPayment(orderId);
   }
 
-  // الحصول على حالة الدفع
   @Get('status/:paymentId')
   async getPaymentStatus(@Param('paymentId') paymentId: string) {
     return this.paymentService.getPaymentStatus(paymentId);
   }
 
-  // عرض سجل المدفوعات لمستخدم معين
   @Get('history')
-  async getPaymentHistory(@Request() req) {
-    const userId = req.user.id || req.user.userId;
+  async getPaymentHistory(@Req() req) {
+    const userId = req.user.id;
     return this.paymentService.getPaymentHistory(userId);
   }
 }

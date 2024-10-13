@@ -36,8 +36,19 @@ export class UserController {
     return this._UserService.getAllUsers();
   }
 
+
+  @Get('/one')
+  @Roles('user','admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @HttpCode(HttpStatus.FOUND)
+  findUser( @Request() req): Promise<UpdateUserDto> {
+        const userId = req.user.id; // Get user ID from the authenticated user
+
+    return this._UserService.getUserById(userId);
+  }
+
   @Get('/:id')
-  @Roles('user', 'admin')
+  @Roles('admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
   findUser(@Param('id') id): Promise<UpdateUserDto> {
@@ -89,22 +100,26 @@ export class UserController {
     return { message: 'Password updated successfully' };
   }
 
-  @Delete('/:id')
+  @Delete('')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  DeleteUser(@Param('id') id: any): Promise<void> {
-    return this._UserService.deleteUser(id);
+  DeleteUser(@Request() req): Promise<void> {
+   const userId = req.user.id; // Get user ID from the authenticated user
+
+    return this._UserService.deleteUser(userId);
   }
   @Patch('/:id')
   @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   UpdateUserDto(
-    @Param() { id }: any,
+    @Request() req,
     @Body() userData: UpdateUserDto,
   ): Promise<UpdateUserDto> {
-    return this._UserService.updateUserById(id, userData);
+    const userId = req.user.id; // Get user ID from the authenticated user
+
+    return this._UserService.updateUserById(userId, userData);
   }
 
   @Post('forgot-password')

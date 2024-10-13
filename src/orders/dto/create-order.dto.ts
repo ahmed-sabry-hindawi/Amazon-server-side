@@ -1,10 +1,20 @@
-import { IsNotEmpty, IsArray, ValidateNested, IsEnum, IsObject, IsOptional, IsMongoId, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsMongoId,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
 import { ProductItemDto } from './Product-item.dto';
+// import { ProductItemDto } from './Product-item.dto';
 
 export class CreateOrderDto {
-  
   @IsNotEmpty()
   @IsOptional()
   @IsMongoId()
@@ -27,21 +37,12 @@ export class CreateOrderDto {
     ar: string;
   };
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => AddressDto)
-  shippingAddress: {
-    en: string;
-    ar: string;
-  };
+  @IsString()
+  shippingAddress: string;
 
   @IsNotEmpty()
   @IsMongoId()
   paymentId: string;
-
-  @IsOptional()
-  @IsNotEmpty()
-  orderDate?: Date;
 }
 
 class OrderStatusDto {
@@ -52,11 +53,11 @@ class OrderStatusDto {
   ar: string;
 }
 
-class AddressDto {
-  @IsNotEmpty()
-  en: string;
+// class AddressDto {
+//   @IsNotEmpty()
+//   en: string;
 
-  @IsNotEmpty()
-  @IsString()
-  ar: string;
-}
+//   @IsNotEmpty()
+//   @IsString()
+//   ar: string;
+// }

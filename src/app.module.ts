@@ -36,8 +36,6 @@ import { ShippingModule } from './shipping/shipping.module';
       useFactory: async (_configService: ConfigService) => {
         return {
           uri: _configService.get('MONGO_URI'),
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
         };
       },
     }),

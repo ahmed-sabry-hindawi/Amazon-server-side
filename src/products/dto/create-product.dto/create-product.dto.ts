@@ -21,15 +21,12 @@ export class ProductNameDto {
 }
 
 export class CreateProductDto {
-  @IsMongoId()
-  sellerId: string;
-
   @IsOptional()
   @IsArray()
   reviews?: string[];
 
   @IsMongoId()
-  categoryId: string;
+  subcategoryId: string;
 
   @ValidateNested()
   @Type(() => ProductNameDto)

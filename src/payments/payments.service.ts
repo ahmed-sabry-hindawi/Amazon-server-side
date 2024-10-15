@@ -64,18 +64,25 @@ export class PaymentService {
   }
 
   async capturePayment(orderId: string, userId: string) {
-    const payment = await this.paymentModel.findOne({ orderId, userId });
-    if (!payment) {
-      throw new BadRequestException('Payment not found or unauthorized');
-    }
-
-    const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
     try {
+      const payment = await this.paymentModel.findOne({ orderId, userId });
+      if (!payment) {
+        throw new BadRequestException('Payment not found or unauthorized');
+      }
+
+      const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
       const capture = await this.payPalClient.execute(captureRequest);
       await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
       return capture.result;
     } catch (error) {
       console.error(`Capture Payment Error: ${error.message}`);
+      if (error.response && error.response.name === 'UNPROCESSABLE_ENTITY') {
+        // Log more details for internal review
+        console.error('Compliance violation details:', error.response.details);
+        throw new BadRequestException(
+          'Compliance violation detected. Please contact support for further assistance.',
+        );
+      }
       throw new BadRequestException(`Capture Payment Error: ${error.message}`);
     }
   }

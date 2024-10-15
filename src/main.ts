@@ -12,12 +12,12 @@ async function bootstrap() {
       transform: true,
     }),
   );
-// Enable CORS for all origins
-app.enableCors({
-  origin:'*',
-  credentials:true
-});
-  
-  await app.listen(3000);
+  // Enable CORS for all origins
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
+
+  await app.listen(5000);
 }
 bootstrap();

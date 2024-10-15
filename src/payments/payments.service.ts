@@ -23,6 +23,12 @@ export class PaymentService {
   }
 
   async createPayment(userId: string, amount: number, currency: string) {
+    // Ensure amount is a number
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount)) {
+      throw new BadRequestException('Invalid amount provided');
+    }
+
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
       intent: 'CAPTURE',
@@ -30,7 +36,7 @@ export class PaymentService {
         {
           amount: {
             currency_code: currency,
-            value: amount.toFixed(2),
+            value: numericAmount.toFixed(2),
           },
         },
       ],
@@ -50,59 +56,32 @@ export class PaymentService {
 
       return response.result;
     } catch (error) {
+      console.error(`PayPal Payment Creation Error: ${error.message}`);
       throw new BadRequestException(
         `PayPal Payment Creation Error: ${error.message}`,
       );
     }
   }
 
-  async capturePayment(orderId: string, userId: string, retryCount = 0) {
+  async capturePayment(orderId: string, userId: string) {
     const payment = await this.paymentModel.findOne({ orderId, userId });
     if (!payment) {
       throw new BadRequestException('Payment not found or unauthorized');
     }
 
-    if (payment.status === PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Payment has already been captured');
-    }
-
-    const request = new paypal.orders.OrdersCaptureRequest(orderId);
-
+    const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
     try {
-      const response = await this.payPalClient.execute(request);
-
-      if (response.result.status === 'COMPLETED') {
-        await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
-        return response.result;
-      } else {
-        throw new BadRequestException(
-          `Unexpected payment status: ${response.result.status}`,
-        );
-      }
+      const capture = await this.payPalClient.execute(captureRequest);
+      await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
+      return capture.result;
     } catch (error) {
-      if (error.statusCode === 422) {
-        await this.updatePaymentStatus(orderId, PaymentStatus.FAILED);
-        console.error(
-          `Compliance issue detected for order ${orderId}:`,
-          JSON.stringify(error, null, 2),
-        );
-        throw new BadRequestException(
-          'Payment capture failed due to a compliance issue. Please try using a different payment method or contact our support team for assistance.',
-        );
-      } else if (retryCount < 3) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 1000 * (retryCount + 1)),
-        );
-        return this.capturePayment(orderId, userId, retryCount + 1);
-      }
-      console.error(
-        `PayPal Payment Capture Error for order ${orderId}:`,
-        JSON.stringify(error, null, 2),
-      );
-      throw new BadRequestException(
-        'Payment capture failed. Please try again later or contact our support team for assistance.',
-      );
+      console.error(`Capture Payment Error: ${error.message}`);
+      throw new BadRequestException(`Capture Payment Error: ${error.message}`);
     }
+  }
+
+  private async delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async refundPayment(paymentId: string, refundDto: RefundPaymentDto) {
@@ -118,6 +97,7 @@ export class PaymentService {
       const refund = await this.payPalClient.execute(refundRequest);
       return refund.result;
     } catch (error) {
+      console.error(`Refund Error: ${error.message}`);
       throw new BadRequestException(`Refund Error: ${error.message}`);
     }
   }

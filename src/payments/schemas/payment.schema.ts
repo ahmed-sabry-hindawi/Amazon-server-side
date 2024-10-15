@@ -13,7 +13,7 @@ export class Payment extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Order', required: false })
   orderId: Types.ObjectId;
 
   @Prop({ required: true })

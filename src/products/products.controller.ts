@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Param,
   Post,
   Put,
@@ -43,24 +44,65 @@ export class ProductsController {
 
   @Get('filter')
   async getProductsWithFiltering(
-    @Query() filters: { [key: string]: any },
+    @Query() x: { [key: string]: any },
   ): Promise<Product[]> {
-    return this.productsService.getProductsWithFiltering(filters);
+    console.log(x);
+
+    return this.productsService.getProductsWithFiltering(x);
+  }
+  /************************************************************************* */
+
+  @Get('filterCatName')
+  async filterCatName(
+    @Query('subcategoryId') subcategoryId?: string,
+    @Query('name') name?: string,
+  ): Promise<Product[]> {
+    if (!subcategoryId && !name) {
+      throw new BadRequestException(
+        'At least one of subcategoryId or name must be provided',
+      );
+    }
+
+    try {
+      const products = await this.productsService.findBySubcategoryIdAndName(
+        subcategoryId,
+        name,
+      );
+      return products;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred while filtering products',
+      );
+    }
   }
 
-  @Get('advanced-filter')
+  // @Get('advanced-filter')
+  // async getProductsWithAdvancedFiltering(
+  //   @Query('filters') filters: { [key: string]: any },
+  //   @Query('pagination') pagination: { page: number; limit: number },
+  //   @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
+  // ): Promise<{ products: Product[]; totalCount: number }> {
+  //   return this.productsService.getProductsWithAdvancedFiltering(
+  //     filters,
+  //     pagination,
+  //     sorting,
+  //   );
+  // }
+
+    @Get('advanced-filter')
   async getProductsWithAdvancedFiltering(
     @Query('filters') filters: { [key: string]: any },
     @Query('pagination') pagination: { page: number; limit: number },
     @Query('sorting') sorting: { sortBy: string; order: 'asc' | 'desc' },
   ): Promise<{ products: Product[]; totalCount: number }> {
+    // Ensure filters and sorting are properly structured
     return this.productsService.getProductsWithAdvancedFiltering(
       filters,
       pagination,
       sorting,
     );
   }
-
+  
   @Get('search')
   async getProductsBySearchQuery(
     @Query('query') query: string,
@@ -93,6 +135,25 @@ export class ProductsController {
   @Get()
   async getAllProducts(): Promise<Product[]> {
     return this.productsService.getAllProducts();
+  }
+
+  @Get('filtered')
+  async getFilteredProducts(
+    @Query('categoryId') categoryId?: string,
+    @Query('brand') brand?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('sortBy') sortBy: 'price' | 'name' = 'price',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
+  ): Promise<Product[]> {
+    return this.productsService.getFilteredProducts(
+      categoryId,
+      brand,
+      minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice ? parseFloat(maxPrice) : undefined,
+      sortBy,
+      sortOrder,
+    );
   }
 
   @Get(':id')

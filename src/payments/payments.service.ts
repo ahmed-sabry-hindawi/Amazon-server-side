@@ -23,6 +23,12 @@ export class PaymentService {
   }
 
   async createPayment(userId: string, amount: number, currency: string) {
+    // Ensure amount is a number
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount)) {
+      throw new BadRequestException('Invalid amount provided');
+    }
+
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
       intent: 'CAPTURE',
@@ -30,7 +36,7 @@ export class PaymentService {
         {
           amount: {
             currency_code: currency,
-            value: amount.toFixed(2),
+            value: numericAmount.toFixed(2),
           },
         },
       ],
@@ -50,24 +56,39 @@ export class PaymentService {
 
       return response.result;
     } catch (error) {
+      console.error(`PayPal Payment Creation Error: ${error.message}`);
       throw new BadRequestException(
         `PayPal Payment Creation Error: ${error.message}`,
       );
     }
   }
 
-  async capturePayment(orderId: string) {
-    const request = new paypal.orders.OrdersCaptureRequest(orderId);
-
+  async capturePayment(orderId: string, userId: string) {
     try {
-      const response = await this.payPalClient.execute(request);
+      const payment = await this.paymentModel.findOne({ orderId, userId });
+      if (!payment) {
+        throw new BadRequestException('Payment not found or unauthorized');
+      }
+
+      const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
+      const capture = await this.payPalClient.execute(captureRequest);
       await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
-      return response.result;
+      return capture.result;
     } catch (error) {
-      throw new BadRequestException(
-        `PayPal Payment Capture Error: ${error.message}`,
-      );
+      console.error(`Capture Payment Error: ${error.message}`);
+      if (error.response && error.response.name === 'UNPROCESSABLE_ENTITY') {
+        // Log more details for internal review
+        console.error('Compliance violation details:', error.response.details);
+        throw new BadRequestException(
+          'Compliance violation detected. Please contact support for further assistance.',
+        );
+      }
+      throw new BadRequestException(`Capture Payment Error: ${error.message}`);
     }
+  }
+
+  private async delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async refundPayment(paymentId: string, refundDto: RefundPaymentDto) {
@@ -83,11 +104,17 @@ export class PaymentService {
       const refund = await this.payPalClient.execute(refundRequest);
       return refund.result;
     } catch (error) {
+      console.error(`Refund Error: ${error.message}`);
       throw new BadRequestException(`Refund Error: ${error.message}`);
     }
   }
 
-  async cancelPayment(orderId: string) {
+  async cancelPayment(orderId: string, userId: string) {
+    const payment = await this.paymentModel.findOne({ orderId, userId });
+    if (!payment) {
+      throw new BadRequestException('Payment not found or unauthorized');
+    }
+
     const cancelRequest = new paypal.orders.OrdersVoidRequest(orderId);
     try {
       const response = await this.payPalClient.execute(cancelRequest);
@@ -98,10 +125,12 @@ export class PaymentService {
     }
   }
 
-  async getPaymentStatus(paymentId: string) {
-    const payment = await this.paymentModel.findById(paymentId).exec();
+  async getPaymentStatus(paymentId: string, userId: string) {
+    const payment = await this.paymentModel
+      .findOne({ _id: paymentId, userId })
+      .exec();
     if (!payment) {
-      throw new BadRequestException('Payment not found');
+      throw new BadRequestException('Payment not found or unauthorized');
     }
     return payment.status;
   }
@@ -117,5 +146,19 @@ export class PaymentService {
 
   private async updatePaymentStatus(orderId: string, status: PaymentStatus) {
     await this.paymentModel.findOneAndUpdate({ orderId }, { status }).exec();
+  }
+
+  async createCashOnDeliveryPayment(
+    userId: string,
+    amount: number,
+  ): Promise<Payment> {
+    const payment = new this.paymentModel({
+      userId,
+      amount,
+      paymentMethod: 'cash_on_delivery',
+      status: PaymentStatus.PENDING,
+      transactionId: `COD-${Date.now()}`, // Generate a unique transaction ID for COD
+    });
+    return await payment.save();
   }
 }

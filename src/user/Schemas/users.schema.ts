@@ -7,7 +7,7 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true }) // إضافة timestamps
 export class User {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true})
   name: string;
 
   @Prop({ required: true, unique: true })
@@ -22,9 +22,19 @@ export class User {
     default: 'user',
   })
   role: string;
+  @Prop({ required: false })
+  verificationToken: string;
 
   @Prop({ default: true })
   isActive: boolean;
+  @Prop({ default: false })
+  isVerified: boolean;
+
+  @Prop()
+  resetPasswordToken: string;
+
+  @Prop()
+  resetPasswordExpires: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

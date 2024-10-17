@@ -6,6 +6,8 @@ import {
   Post,
   Req,
   UseGuards,
+  InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
@@ -29,8 +31,22 @@ export class PaymentsController {
   }
 
   @Post('capture/:orderId')
-  async capturePayment(@Param('orderId') orderId: string) {
-    return this.paymentService.capturePayment(orderId);
+  async capturePayment(@Param('orderId') orderId: string, @Req() req) {
+    try {
+      const userId = req.user.id;
+      return await this.paymentService.capturePayment(orderId, userId);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error(
+        'Unexpected error during payment capture:',
+        JSON.stringify(error, null, 2),
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while processing your payment. Please try again later or contact our support team for assistance.',
+      );
+    }
   }
 
   @UseGuards(AuthorizationGuard)
@@ -44,18 +60,30 @@ export class PaymentsController {
   }
 
   @Post('cancel/:orderId')
-  async cancelPayment(@Param('orderId') orderId: string) {
-    return this.paymentService.cancelPayment(orderId);
+  async cancelPayment(@Param('orderId') orderId: string, @Req() req) {
+    const userId = req.user.id;
+    return this.paymentService.cancelPayment(orderId, userId);
   }
 
   @Get('status/:paymentId')
-  async getPaymentStatus(@Param('paymentId') paymentId: string) {
-    return this.paymentService.getPaymentStatus(paymentId);
+  async getPaymentStatus(@Param('paymentId') paymentId: string, @Req() req) {
+    const userId = req.user.id;
+    return this.paymentService.getPaymentStatus(paymentId, userId);
   }
 
   @Get('history')
   async getPaymentHistory(@Req() req) {
     const userId = req.user.id;
     return this.paymentService.getPaymentHistory(userId);
+  }
+
+  @Post('cash-on-delivery')
+  @UseGuards(AuthenticationGuard)
+  async createCashOnDeliveryPayment(
+    @Req() req,
+    @Body('amount') amount: number,
+  ) {
+    const userId = req.user.id;
+    return this.paymentService.createCashOnDeliveryPayment(userId, amount);
   }
 }

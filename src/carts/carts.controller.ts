@@ -58,17 +58,7 @@ export class CartsController {
     }
   }
 
-  // Checkout process
-  @Post('user/checkout')
-  @UseGuards(AuthenticationGuard)
-  async checkout(@Request() req): Promise<Order> {
-    try {
-      const userId = req.user.id;
-      return await this.cartsService.checkout(userId);
-    } catch (error) {
-      throw new InternalServerErrorException('Checkout failed');
-    }
-  }
+
 
   // Get cart by user ID
   //done
@@ -107,7 +97,7 @@ export class CartsController {
   async deleteByUserId(@Request() req): Promise<Cart> {
     try {
       const userId = req.user.id;
-      return await this.cartsService.deleteByUserId(userId);
+      return await this.cartsService.deleteCartByUserId(userId);
     } catch (error) {
       throw new InternalServerErrorException('No cart Found');
     }

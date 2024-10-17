@@ -166,34 +166,10 @@ export class CartsService {
     }
   }
 
-  // Checkout process
-  // need to confirm
-  async checkout(userId: string): Promise<Order> {
-    try {
-      const cart = await this.cartModel.findOne({ userId });
-      if (!cart || cart.items.length === 0) {
-        throw new NotFoundException(`Cart for user ID ${userId} is empty`);
-      }
-
-      const order = new this.orderModel({
-        userId,
-        items: cart.items,
-        totalPrice: cart.totalPrice,
-        shippingAddress: 'Shipping address',
-        paymentId: new Types.ObjectId(), // Placeholder for payment ID
-      });
-
-      await order.save();
-      await this.cartModel.deleteOne({ userId });
-      return order;
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to checkout');
-    }
-  }
 
   // Delete cart by user ID
   //done
-  async deleteByUserId(userId: string): Promise<Cart> {
+  async deleteCartByUserId(userId: string): Promise<Cart> {
     try {
       const cart = await this.cartModel.findOneAndDelete({ userId });
       if (!cart) {

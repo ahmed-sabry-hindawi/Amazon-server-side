@@ -2,7 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
 export enum OrderStatus {
-  PENDING = 'pending',
+  Pending = 'pending',
+  Completed = 'completed',
   SHIPPED = 'shipped',
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
@@ -27,20 +28,11 @@ export class Order extends Document {
   @Prop({ required: true })
   totalPrice: number;
 
-  // Localization for orderStatus
-  @Prop({
-    type: {
-      en: { type: String, enum: OrderStatus, default: OrderStatus.PENDING },
-      ar: { type: String, enum: ['قيد الانتظار', 'تم الشحن', 'تم التوصيل', 'ملغاة'], default: 'قيد الانتظار' },
-    },
-    _id: false,
-  })
-  orderStatus: {
-    en: OrderStatus;
-    ar: string;
-  };
+ 
+  @Prop({ type: String, enum: OrderStatus, default: OrderStatus.Pending })
+  orderStatus: OrderStatus;
 
-  // Localization for shippingAddress
+  
   @Prop({ required: true })
   shippingAddress: string
 

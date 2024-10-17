@@ -17,5 +17,6 @@ import { Order, OrderSchema } from 'src/orders/schemas/order.schema';
   ],
   controllers: [CartsController],
   providers: [CartsService],
+  exports: [MongooseModule],
 })
 export class CartsModule {}

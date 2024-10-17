@@ -13,11 +13,40 @@ export class OrdersService {
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
+  // user functions
+
   // Create a new order
   async create(createOrder: CreateOrderDto): Promise<Order> {
     return await this.orderModel.create(createOrder);
   }
 
+  // Get orders by user ID
+  async findByUserId(userId: string): Promise<Order[]> {
+    return await this.orderModel.find({ userId }).populate('paymentId').exec();
+  }
+  // get authenticated user orders by status
+// cancel order by user 
+async findUserOrdersByStatus(
+  userId: string,
+  status: OrderStatus,
+): Promise<Order[]> {
+  return await this.orderModel
+    .find({ userId, orderStatus: status })
+    .populate('userId')
+    .populate('paymentId')
+}
+
+// Get user active orders
+async findAllExceptCancelled(userId: string): Promise<Order[]> {
+  return await this.orderModel
+    .find({ userId, 'orderStatus': { $ne: OrderStatus.CANCELLED } })
+    .populate('userId')
+    .populate('paymentId')
+
+}
+
+
+  // admin functions
   // Get all orders (for admin)
   async findAll(): Promise<Order[]> {
     return await this.orderModel
@@ -26,33 +55,29 @@ export class OrdersService {
       .populate('paymentId')
       .exec();
   }
+    // Get orders by status (for Admin)
+    async findByStatus(status: OrderStatus): Promise<Order[]> {
+      return await this.orderModel
+        .find({ orderStatus: status })
+        .populate('userId')
+        .populate('paymentId');
+    }
 
+
+// for all
   // Get order by ID
   async findById(id: string): Promise<Order> {
     const order = await this.orderModel
       .findById(id)
       .populate('userId')
-      .populate('paymentId')
-      .exec();
+      .populate('paymentId');
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
     return order;
   }
 
-  // Get orders by user ID
-  async findByUserId(userId: string): Promise<Order[]> {
-    return await this.orderModel.find({ userId }).populate('paymentId').exec();
-  }
 
-  // Get orders by status (for Admin)
-  async findByStatus(status: OrderStatus): Promise<Order[]> {
-    return await this.orderModel
-      .find({ 'orderStatus.en': status })
-      .populate('userId')
-      .populate('paymentId')
-      .exec();
-  }
 
   // Update order by ID
   async updateById(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
@@ -83,11 +108,11 @@ export class OrdersService {
   // Update order status by ID (for Admin)
   async updateStatus(
     id: string,
-    statusDto: { en: OrderStatus; ar: string },
+    status: OrderStatus,
   ): Promise<Order> {
     const order = await this.orderModel.findByIdAndUpdate(
       id,
-      { orderStatus: statusDto },
+      { orderStatus: status },
       { new: true }, // return the updated document
     );
     if (!order) {
@@ -106,4 +131,5 @@ export class OrdersService {
       .populate('paymentId')
       .exec();
   }
+
 }

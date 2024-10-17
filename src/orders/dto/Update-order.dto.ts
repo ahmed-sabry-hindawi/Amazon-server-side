@@ -28,47 +28,19 @@ export class UpdateOrderDto {
   totalPrice?: number;
 
   @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => OrderStatusDto)
-  orderStatus?: {
-    en?: OrderStatus; // Optional English status
-    ar?: string; // Optional Arabic status
-  };
+  @IsEnum(OrderStatus)
+  orderStatus?: OrderStatus;
 
   @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => AddressDto)
-  shippingAddress?: {
-    en?: string; // Optional English address
-    ar?: string; // Optional Arabic address
-  };
+  @IsString()
+  shippingAddress?: string;
 
   @IsOptional()
   @IsMongoId()
   paymentId?: string;
 
-  @IsOptional()
-  orderDate?: Date; // Optional date field
 }
 
-class OrderStatusDto {
-  @IsOptional()
-  @IsEnum(OrderStatus)
-  en?: OrderStatus; // Optional English status
 
-  @IsOptional()
-  @IsString()
-  ar?: string; // Optional Arabic status
-}
 
-class AddressDto {
-  @IsOptional()
-  @IsString()
-  en?: string; // Optional English address
 
-  @IsOptional()
-  @IsString()
-  ar?: string; // Optional Arabic address
-}

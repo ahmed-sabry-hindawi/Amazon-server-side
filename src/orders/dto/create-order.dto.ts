@@ -12,7 +12,6 @@ import {
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../schemas/order.schema';
 import { ProductItemDto } from './Product-item.dto';
-// import { ProductItemDto } from './Product-item.dto';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -29,35 +28,16 @@ export class CreateOrderDto {
   @IsNumber()
   totalPrice: number;
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => OrderStatusDto)
-  orderStatus: {
-    en: OrderStatus;
-    ar: string;
-  };
+  @IsEnum(OrderStatus)
+  @IsOptional()
+  orderStatus: OrderStatus;
 
   @IsString()
+  @IsOptional()
   shippingAddress: string;
 
   @IsNotEmpty()
   @IsMongoId()
+  @IsOptional()
   paymentId: string;
 }
-
-class OrderStatusDto {
-  @IsEnum(OrderStatus)
-  en: OrderStatus;
-
-  @IsNotEmpty()
-  ar: string;
-}
-
-// class AddressDto {
-//   @IsNotEmpty()
-//   en: string;
-
-//   @IsNotEmpty()
-//   @IsString()
-//   ar: string;
-// }

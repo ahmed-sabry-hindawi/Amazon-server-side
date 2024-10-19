@@ -12,6 +12,7 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -30,24 +31,8 @@ export class OrdersController {
   constructor(private ordersService: OrdersService, private cartService: CartsService) {}
 
 
-  @Post()
-  
-  async create(
-    @Request() req,
-    @Body() createOrderDto: CreateOrderDto,
-  ): Promise<Order> {
-    const userId = req.user.id; // Get user ID from the authenticated user
-    createOrderDto.userId = userId;
-    const order = await this.ordersService.create(createOrderDto);
-    if (!order) {
-      throw new HttpException('Failed to create order', HttpStatus.BAD_REQUEST);
-    }
-    await this.cartService.deleteCartByUserId(userId); // Delete the cart after order creation
-    return order;
-  }
-
   // Initiate a new order without deleting the cart
-
+  // done
   @Post('initiate')
   async initiateOrder(
     @Request() req,
@@ -66,9 +51,8 @@ export class OrdersController {
   }
 
   // Complete the order by adding address and payment ID, then delete the cart
-
+  // done
   @Patch('complete/:id')
-  
   async completeOrder(
     @Param('id') orderId: string,
     @Request() req,
@@ -98,7 +82,7 @@ export class OrdersController {
   // done
   @Get()
   @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @UseGuards( AuthorizationGuard)
   async findAll(): Promise<Order[]> {
     return await this.ordersService.findAll();
   }
@@ -107,7 +91,7 @@ export class OrdersController {
   // done
   @Get('recent')
   @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @UseGuards(AuthorizationGuard)
   async findRecent(@Query('limit') limit: number): Promise<Order[]> {
     return await this.ordersService.findRecent(limit);
   }
@@ -115,7 +99,6 @@ export class OrdersController {
   // Get orders by user ID
   // done
   @Get('user')
-  
   async findByUserId(@Request() req): Promise<Order[]> {
     const userId = req.user.id; // Get user ID from the authenticated use
     return await this.ordersService.findByUserId(userId);
@@ -124,7 +107,6 @@ export class OrdersController {
   // Get order by ID
   // done
   @Get(':id')
-  
   async findById(@Param('id') id: string): Promise<Order> {
     return await this.ordersService.findById(id);
   }
@@ -132,7 +114,8 @@ export class OrdersController {
   // Get orders by status
   // done
   @Get('status/:status')
-  
+  @Roles('admin')
+  @UseGuards(AuthorizationGuard)
   async findByStatus(@Param('status') status: OrderStatus): Promise<Order[]> {
     return await this.ordersService.findByStatus(status);
   }
@@ -140,8 +123,8 @@ export class OrdersController {
   ////////////////// stoppp
 
   // Update order by ID
+  // need to check the update criteria
   @Patch(':id')
-  
   async updateById(@Request() req,
     @Param('id') id: string,
     @Body() updateOrderDto: UpdateOrderDto,
@@ -157,16 +140,27 @@ export class OrdersController {
   }
 
   // Update order status
-  @Patch(':id/status')
-  @Roles('admin') // may be seller ??
-  
-  async updateStatus( @Param('id') id: string, @Body() status: OrderStatus ): Promise<Order> {
-    return this.ordersService.updateStatus(id, status);
+  // user not allowed to update all status just can cancel this why he is not included in the update status
+  // done
+  @Patch('status/:id')
+  @Roles('admin','seller')
+  @UseGuards(AuthorizationGuard)
+  async updateStatus(
+    @Param('id') id: string,
+    @Body('status', new ParseEnumPipe(OrderStatus)) status: OrderStatus
+  ): Promise<Order> {
+    try {
+      const order = await this.ordersService.updateStatus(id, status);
+      return order;
+    } catch (error) {
+      throw new HttpException('Failed to update order status', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Delete order by ID
+  // done
   @Delete(':id')
-  
+  @Roles('admin','user')
   async deleteById (@Request() req,@Param('id') id: string): Promise<Order> {
     //first check if the order created by this user
     const userId = req.user.id; 
@@ -183,40 +177,37 @@ export class OrdersController {
     return this.ordersService.deleteById(id);
   }
 
-  @Patch(':id/cancel')
-  
-  async cancelOrder(@Param('id') id: string): Promise<Order> {
-    return this.ordersService.updateStatus(id, OrderStatus.CANCELLED);
-  }
-
-  @Get('cancelled')
-  @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  async findCancelled(): Promise<Order[]> {
-    return await this.ordersService.findByStatus(OrderStatus.CANCELLED);
-  }
-
-  @Patch('user/:id/cancel')
-  
-  async cancelUserOrder(@Request() req, @Param('id') id: string): Promise<Order> {
+  // cancel order for user and admin
+  // done
+  @Patch('cancel/:id')
+  @Roles('admin','user')
+  @UseGuards(AuthorizationGuard)
+  async cancelOrder(@Request() req, @Param('id') id: string): Promise<Order> {
     const userId = req.user.id;
+    const userRole = req.user.role;
     const order = await this.ordersService.findById(id);
-    if (order.userId !== userId) {
+    if (userRole === 'user' && order.userId._id != userId) {
       throw new ForbiddenException('You are not authorized to cancel this order');
-    }
+    };
+    if (userRole === 'admin') {
+      return this.ordersService.updateStatus(id, OrderStatus.CANCELLED);
+    };
     return this.ordersService.updateStatus(id, OrderStatus.CANCELLED);
   }
 
+  // Get user cancelled orders
+  // done
   @Get('user/cancelled')
-  
+  @Roles('user')
   async findUserCancelledOrders(@Request() req): Promise<Order[]> {
     const userId = req.user.id;
     return await this.ordersService.findUserOrdersByStatus(userId, OrderStatus.CANCELLED);
   }
 
   // Get user active orders
+  // done
   @Get('user/active')
-  @UseGuards(AuthenticationGuard)
+  @Roles('user')
   async findUserActiveOrders(@Request() req): Promise<Order[]> {
     const userId = req.user.id;
     return await this.ordersService.findAllExceptCancelled(userId);

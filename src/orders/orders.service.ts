@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, OrderStatus } from './schemas/order.schema';
 import { Model } from 'mongoose';
@@ -106,19 +106,22 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
   /////////////////////////
 
   // Update order status by ID (for Admin)
-  async updateStatus(
-    id: string,
-    status: OrderStatus,
-  ): Promise<Order> {
-    const order = await this.orderModel.findByIdAndUpdate(
-      id,
-      { orderStatus: status },
-      { new: true }, // return the updated document
-    );
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
+  async updateStatus(id: string, status: OrderStatus): Promise<Order> {
+    try {
+      const order = await this.orderModel.findByIdAndUpdate(
+        id,
+        { orderStatus: status },
+        { new: true } // return the updated document
+      );
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${id} not found`);
+      }
+
+      return order;
+    } catch (error) {
+      throw new InternalServerErrorException(`Failed to update the status of the order with ID ${id}: ${error.message}`);
     }
-    return order;
   }
 
   // Get recent orders

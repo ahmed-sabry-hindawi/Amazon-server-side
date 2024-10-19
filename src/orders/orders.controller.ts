@@ -61,9 +61,9 @@ export class OrdersController {
     const userId = req.user.id;
 
     // Check if shippingAddress and paymentId are provided
-    if (!updateOrderDto.shippingAddress || !updateOrderDto.paymentId) {
-      throw new HttpException('Shipping address and payment ID are required', HttpStatus.BAD_REQUEST);
-    }
+    // if (!updateOrderDto.shippingAddress || !updateOrderDto.paymentId) {
+    //   throw new HttpException('Shipping address and payment ID are required', HttpStatus.BAD_REQUEST);
+    // }
     // Set the order status to completed
     updateOrderDto.orderStatus = OrderStatus.Completed;
 

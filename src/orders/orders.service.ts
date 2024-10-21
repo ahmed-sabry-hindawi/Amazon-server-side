@@ -22,7 +22,16 @@ export class OrdersService {
 
   // Get orders by user ID
   async findByUserId(userId: string): Promise<Order[]> {
-    return await this.orderModel.find({ userId }).populate('paymentId').exec();
+    return await this.orderModel.find({ userId })
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
+      .populate('paymentId')
+      .populate({
+        path: 'items.productId', // Populate productId within items array
+        model: 'Product' 
+      })
   }
   // get authenticated user orders by status
 // cancel order by user 
@@ -32,17 +41,30 @@ async findUserOrdersByStatus(
 ): Promise<Order[]> {
   return await this.orderModel
     .find({ userId, orderStatus: status })
-    .populate('userId')
+    .populate({
+      path: 'userId',
+      select: '-password' // Exclude the password field
+    })
     .populate('paymentId')
-}
+    .populate({
+      path: 'items.productId', // Populate productId within items array
+      model: 'Product' // Replace 'Product' with the actual model name for products
+    })}
 
 // Get user active orders
 async findAllExceptCancelled(userId: string): Promise<Order[]> {
   return await this.orderModel
     .find({ userId, 'orderStatus': { $ne: OrderStatus.CANCELLED } })
-    .populate('userId')
+    .populate({
+      path: 'userId',
+      select: '-password' // Exclude the password field
+    })
     .populate('paymentId')
-
+    .populate({
+      path: 'items.productId', // Populate productId within items array
+      model: 'Product' // Replace 'Product' with the actual model name for products
+    })
+    .exec();
 }
 
 
@@ -51,16 +73,31 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
   async findAll(): Promise<Order[]> {
     return await this.orderModel
       .find()
-      .populate('userId')
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
       .populate('paymentId')
+      .populate({
+        path: 'items.productId', // Populate productId within items array
+        model: 'Product' // Replace 'Product' with the actual model name for products
+      })
       .exec();
   }
     // Get orders by status (for Admin)
     async findByStatus(status: OrderStatus): Promise<Order[]> {
       return await this.orderModel
         .find({ orderStatus: status })
-        .populate('userId')
-        .populate('paymentId');
+        .populate({
+          path: 'userId',
+          select: '-password' // Exclude the password field
+        })
+        .populate('paymentId')
+        .populate({
+          path: 'items.productId', // Populate productId within items array
+          model: 'Product' // Replace 'Product' with the actual model name for products
+        })
+        .exec();
     }
 
 
@@ -69,8 +106,16 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
   async findById(id: string): Promise<Order> {
     const order = await this.orderModel
       .findById(id)
-      .populate('userId')
-      .populate('paymentId');
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
+      .populate('paymentId')
+      .populate({
+        path: 'items.productId', // Populate productId within items array
+        model: 'Product' // Replace 'Product' with the actual model name for products
+      })
+      .exec();
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -85,7 +130,15 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
       .findByIdAndUpdate(id, updateOrderDto, {
         new: true,
       })
-      .populate('userId');
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
+      .populate({
+        path: 'items.productId', // Populate productId within items array
+        model: 'Product' // Replace 'Product' with the actual model name for products
+      })
+      .exec();
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -96,7 +149,15 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
   async deleteById(id: string): Promise<Order> {
     const order = await this.orderModel
       .findByIdAndDelete(id)
-      .populate('userId');
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
+      .populate({
+        path: 'items.productId', // Populate productId within items array
+        model: 'Product' // Replace 'Product' with the actual model name for products
+      })
+      .exec();
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
@@ -130,7 +191,10 @@ async findAllExceptCancelled(userId: string): Promise<Order[]> {
       .find()
       .sort({ orderDate: -1 })
       .limit(limit)
-      .populate('userId')
+      .populate({
+        path: 'userId',
+        select: '-password' // Exclude the password field
+      })
       .populate('paymentId')
       .exec();
   }

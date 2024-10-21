@@ -81,8 +81,8 @@ export class OrdersController {
   // Get all orders
   // done
   @Get()
-  // @Roles('admin')
-  // @UseGuards( AuthorizationGuard)
+  @Roles('admin')
+  @UseGuards( AuthorizationGuard)
   async findAll(): Promise<Order[]> {
     return await this.ordersService.findAll();
   }

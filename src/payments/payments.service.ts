@@ -22,7 +22,7 @@ export class PaymentService {
     this.payPalClient = new paypal.core.PayPalHttpClient(environment);
   }
 
-  async createPayment(userId: string, amount: number, currency: string) {
+  async createPayment(userId: string, amount: number, currency: string , order_ID:string) {
     // Ensure amount is a number
     const numericAmount = Number(amount);
     if (isNaN(numericAmount)) {
@@ -48,7 +48,7 @@ export class PaymentService {
 
       await this.storePayment({
         userId,
-        orderId,
+        orderId:order_ID,
         amount,
         transactionId: orderId,
         status: PaymentStatus.PENDING,

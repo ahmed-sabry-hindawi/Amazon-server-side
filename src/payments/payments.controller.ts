@@ -25,9 +25,15 @@ export class PaymentsController {
     @Req() req,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
+    @Body('order_ID') order_ID: string,
   ) {
     const userId = req.user.id;
-    return this.paymentService.createPayment(userId, amount, currency);
+    return this.paymentService.createPayment(
+      userId,
+      amount,
+      currency,
+      order_ID,
+    );
   }
 
   @Post('capture/:orderId')

@@ -54,7 +54,7 @@ import { ShippingModule } from './shipping/shipping.module';
     OrdersModule,
     ReviewsModule,
     CartsModule,
-    ShippingModule
+    ShippingModule,
   ],
 
   controllers: [AppController],

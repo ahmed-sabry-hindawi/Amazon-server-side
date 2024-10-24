@@ -30,7 +30,7 @@ export class UserController {
 
   @Get('')
   @HttpCode(HttpStatus.FOUND)
-  @Roles('admin')
+  @Roles('user','admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async getAllUser(): Promise<UpdateUserDto[]> {
     return this._UserService.getAllUsers();

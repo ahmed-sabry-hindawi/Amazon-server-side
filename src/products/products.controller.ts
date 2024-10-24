@@ -181,7 +181,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('seller')
+  @Roles('seller',"admin")
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,

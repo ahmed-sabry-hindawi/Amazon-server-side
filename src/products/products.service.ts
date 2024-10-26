@@ -148,10 +148,29 @@ export class ProductsService {
     }
   }
 
-  async addImageToProduct(
-    productId: string,
-    imageUrl: string,
-  ): Promise<Product> {
+  // async addImageToProduct(
+  //   productId: string,
+  //   imageUrl: string,
+  // ): Promise<Product> {
+  //   try {
+  //     const product = await this.productModel
+  //       .findByIdAndUpdate(
+  //         productId,
+  //         { $push: { imageUrls: imageUrl } },
+  //         { new: true },
+  //       )
+  //       .exec();
+  //     if (!product) {
+  //       throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+  //     }
+  //     return product;
+  //   } catch (error) {
+  //     throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
+
+
+  async addImageToProduct(productId: string, imageUrl: string): Promise<Product> {
     try {
       const product = await this.productModel
         .findByIdAndUpdate(
@@ -168,6 +187,10 @@ export class ProductsService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  
+
+
+
 
   async removeImageFromProduct(
     productId: string,

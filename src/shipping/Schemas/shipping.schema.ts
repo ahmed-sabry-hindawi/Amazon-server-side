@@ -9,15 +9,17 @@ export type ShippingDocument = Shipping & Document;
 export class Shipping {
   @Prop({ required: true })
   address: string;
-  // @Prop({ required: false })
-  // expectedDeliveryDate: Date;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   trackingNumber: string;
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isActive: boolean;
-  @Prop( { type: mongoose.Schema.Types.ObjectId, ref: 'Order',required:true } )
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  userId: mongoose.Types.ObjectId;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: false })
   orderId: mongoose.Types.ObjectId;
 }
 

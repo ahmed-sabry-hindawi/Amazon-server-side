@@ -19,12 +19,14 @@ export class CreateShippingDto {
   // expectedDeliveryDate: DateExpression;
 
   @IsString()
-  @IsNotEmpty()
   trackingNumber: string;
 
   @IsBoolean()
   isActive: Boolean;
 
   @IsMongoId()
-  orderId:string
+  orderId: string;
+
+  @IsMongoId()
+  userId: string;
 }

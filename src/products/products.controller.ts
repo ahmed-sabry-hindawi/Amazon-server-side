@@ -171,7 +171,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async createProduct(
     @Body() createProductDto: CreateProductDto,
@@ -190,7 +190,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('seller')
+  @Roles('seller',"admin")
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,
@@ -200,7 +200,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async deleteProduct(@Param('id') productId: string): Promise<void> {
     return this.productsService.deleteProduct(productId);

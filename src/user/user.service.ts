@@ -46,8 +46,8 @@ export class UserService {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
       const randomToken = crypto.randomBytes(32).toString('hex');
-      
-      const verificationToken = randomToken
+
+      const verificationToken = randomToken;
 
       const newUser = new this.userModel({
         ...userData,
@@ -55,16 +55,17 @@ export class UserService {
         verificationToken,
         isVerified: false,
       });
-try{  await this.emailService.sendVerificationEmail(
-        userData.email as string,
-        verificationToken,
-      )}catch (error) {
+      try {
+        await this.emailService.sendVerificationEmail(
+          userData.email as string,
+          verificationToken,
+        );
+      } catch (error) {
         if (error instanceof ConflictException) {
           throw error;
         }
         throw new Error(`this Error form send email : ${error.message}`);
       }
-    
 
       return await newUser.save();
     } catch (error) {
@@ -159,7 +160,7 @@ try{  await this.emailService.sendVerificationEmail(
       user.isVerified = true;
       user.verificationToken = undefined;
       await user.save();
-      return user
+      return user;
     } else if (email) {
       // User has registered before
       const user = await this.userModel.findOne({ email });
@@ -172,7 +173,7 @@ try{  await this.emailService.sendVerificationEmail(
           'Please verify your email before logging in',
         );
       }
-      return user
+      return user;
     } else {
       throw new BadRequestException(
         'Either email or verification token must be provided',
@@ -183,8 +184,8 @@ try{  await this.emailService.sendVerificationEmail(
 
   async deleteUser(id: string): Promise<void> {
     try {
-      const result = await this.userModel.findByIdAndDelete(id).exec();
-      if (!result) {
+      const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
+      if (!deletedUser) {
         throw new NotFoundException(`User with id ${id} not found`);
       }
     } catch (error) {
@@ -228,7 +229,7 @@ try{  await this.emailService.sendVerificationEmail(
     }
 
     const randomToken = crypto.randomBytes(32).toString('hex');
-    const resetToken =randomToken
+    const resetToken = randomToken;
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // Valid for one hour
     await user.save();
@@ -253,5 +254,79 @@ try{  await this.emailService.sendVerificationEmail(
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
+  }
+
+  async createUserByAdmin(
+    adminId: string,
+    userData: CreateUserDto,
+  ): Promise<UpdateUserDto> {
+    try {
+      const admin = await this.userModel.findById(adminId);
+      if (!admin || admin.role !== 'admin') {
+        throw new UnauthorizedException('Only admins can create users');
+      }
+
+      const existingUser = await this.userModel
+        .findOne({ email: userData.email })
+        .lean()
+        .exec();
+      if (existingUser) {
+        throw new ConflictException('Email already exists');
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
+
+      const newUser = new this.userModel({
+        ...userData,
+        password: hashedPassword,
+        isVerified: true, // Admin-created users are automatically verified
+      });
+
+      return await newUser.save();
+    } catch (error) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      throw new Error(`Failed to create user by admin: ${error.message}`);
+    }
+  }
+
+  async updateUserByAdmin(
+    adminId: string,
+    userId: string,
+    userData: Partial<UpdateUserDto>,
+  ): Promise<UpdateUserDto> {
+    try {
+      const admin = await this.userModel.findById(adminId);
+      if (!admin || admin.role !== 'admin') {
+        throw new UnauthorizedException('Only admins can update users');
+      }
+
+      const updatedUser = await this.userModel
+        .findByIdAndUpdate(userId, userData, {
+          new: true,
+          runValidators: true,
+        })
+        .lean()
+        .exec();
+
+      if (!updatedUser) {
+        throw new NotFoundException(`User with id ${userId} not found`);
+      }
+
+      return updatedUser;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      throw new Error(`Failed to update user by admin: ${error.message}`);
+    }
   }
 }

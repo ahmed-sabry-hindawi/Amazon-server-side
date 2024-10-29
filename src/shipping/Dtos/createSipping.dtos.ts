@@ -1,32 +1,27 @@
 import {
-  IsAlphanumeric,
   IsBoolean,
-  isBoolean,
-  IsDateString,
   IsMongoId,
   IsNotEmpty,
-  isNotEmpty,
+  IsOptional,
   IsString,
 } from 'class-validator';
-import { DateExpression } from 'mongoose';
 
 export class CreateShippingDto {
   @IsString()
   @IsNotEmpty()
   address: string;
 
-  // @IsDateString()
-  // expectedDeliveryDate: DateExpression;
-
+  @IsOptional()
   @IsString()
   trackingNumber: string;
 
+  @IsOptional()
   @IsBoolean()
-  isActive: Boolean;
+  isActive: boolean;
 
+  @IsOptional()
   @IsMongoId()
   orderId: string;
 
-  @IsMongoId()
   userId: string;
 }

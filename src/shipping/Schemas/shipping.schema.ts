@@ -1,7 +1,6 @@
-import { Order } from './../../orders/schemas/order.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import mongoose, { Date, Document } from 'mongoose';
+import mongoose, { Date, Document, Types } from 'mongoose';
 
 export type ShippingDocument = Shipping & Document;
 
@@ -16,8 +15,8 @@ export class Shipping {
   @Prop({ default: false })
   isActive: boolean;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  userId: mongoose.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: false })
   orderId: mongoose.Types.ObjectId;

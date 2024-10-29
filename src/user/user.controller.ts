@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Request,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -19,9 +20,14 @@ import { AuthenticationGuard } from 'src/common/Guards/authentication/authentica
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
+import { HttpExceptionFilter } from 'src/http-exception.filter';
 import { CreateUserDto } from './Dtos/createUser.dtos';
+import { RateLimiterGuard, RateLimit } from 'nestjs-rate-limiter';
 
 @Controller('user')
+// @UseFilters(new HttpExceptionFilter())
+// @UseGuards(RateLimiterGuard)
+@UseGuards(RateLimiterGuard)
 export class UserController {
   constructor(
     private readonly _UserService: UserService,
@@ -29,6 +35,7 @@ export class UserController {
   ) {}
 
   @Get('')
+  // @UseFilters(new HttpExceptionFilter())
   @HttpCode(HttpStatus.FOUND)
   @Roles('user', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -47,12 +54,14 @@ export class UserController {
   }
 
   @Post('register')
+  // @UseFilters(new HttpExceptionFilter())
   @HttpCode(HttpStatus.OK)
   async CreateUser(@Body() user: CreateUserDto): Promise<UpdateUserDto> {
     return this._UserService.createNewUser(user);
   }
   @Post('verifyEmail')
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   async verifyEmail(
     @Body('email') email?: string,
     @Body('token') token?: string,
@@ -70,6 +79,7 @@ export class UserController {
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   async login(
     @Body() user: Login,
   ): Promise<{ token: string; email: string; userName: string }> {
@@ -79,6 +89,7 @@ export class UserController {
   @Patch('update/password')
   @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updatePassword(
     @Request() req,
@@ -97,6 +108,7 @@ export class UserController {
   @Delete('')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
+  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   DeleteUser(@Request() req): Promise<void> {
     const userId = req.user.id; // Get user ID from the authenticated user
@@ -106,6 +118,7 @@ export class UserController {
   @Patch('/:id')
   @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   UpdateUserDto(
     @Request() req,
@@ -118,6 +131,7 @@ export class UserController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   async forgotPassword(
     @Body('email') email: string,
   ): Promise<{ message: string }> {
@@ -163,6 +177,7 @@ export class UserController {
   @Roles('admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.OK)
+  // @UseFilters(new HttpExceptionFilter())
   async updateUserByAdmin(
     @Request() req,
     @Param('userId') userId: string,

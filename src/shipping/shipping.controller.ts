@@ -31,9 +31,9 @@ export class ShippingController {
     @Body() createShippingDto: CreateShippingDto,
     @Req() req,
   ): Promise<Shipping> {
-    console.log('req.user:', req.user); // This will show what is inside req.user
+
     const userId = req.user.id;
-    console.log('User ID:', userId); // Log the userId to check its value
+  
 
     // Check if userId is a valid ObjectId
     if (!Types.ObjectId.isValid(userId)) {

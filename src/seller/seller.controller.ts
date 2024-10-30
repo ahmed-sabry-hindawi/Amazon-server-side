@@ -1,4 +1,16 @@
-import { Controller, Post, Body, Patch, Param, Req, UseGuards, Request, HttpException, HttpStatus, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Req,
+  UseGuards,
+  Request,
+  HttpException,
+  HttpStatus,
+  Get,
+} from '@nestjs/common';
 import { SellerService } from './seller.service';
 import { CreateSellerDto } from './dto/create-seller.dto';
 import { Seller } from './schemas/seller.schema';
@@ -7,23 +19,33 @@ import { AuthenticationGuard } from 'src/common/Guards/authentication/authentica
 
 @Controller('sellers')
 export class SellerController {
-  constructor(private  sellerService: SellerService) {}
+  constructor(private sellerService: SellerService) {}
 
   @Post('register')
   @UseGuards(AuthenticationGuard)
   @Roles('user')
-  async registerSeller(@Body() createSellerDto: CreateSellerDto, @Request() req):Promise<Seller> {
-    console.log(req.user);
-    
+  async registerSeller(
+    @Body() createSellerDto: CreateSellerDto,
+    @Request() req,
+  ): Promise<Seller> {
+    // console.log(req.user);
+
     if (!req.user || !req.user.id) {
       throw new Error('User not authenticated or user ID not found');
     }
-    
+
     const userId = req.user.id;
     try {
-      return await this.sellerService.createSeller(createSellerDto, userId, 'pending');
+      return await this.sellerService.createSeller(
+        createSellerDto,
+        userId,
+        'pending',
+      );
     } catch (error) {
-      throw new HttpException('Error registering seller: ' + error.message, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Error registering seller: ' + error.message,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -36,10 +58,10 @@ export class SellerController {
       throw new Error('Error approving seller: ' + error.message);
     }
   }
-  
+
   @Patch(':id/reject')
   @Roles('admin')
-  async rejectSeller(@Param('id') id: string):Promise<Seller> {
+  async rejectSeller(@Param('id') id: string): Promise<Seller> {
     // id is the _id in the seller collection
     try {
       return await this.sellerService.updateSellerStatus(id, 'rejected');
@@ -51,7 +73,7 @@ export class SellerController {
   @Get('status')
   @UseGuards(AuthenticationGuard)
   async getUserSellerStatus(@Request() req) {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     return await this.sellerService.checkUserSellerStatus(userId);
   }
 }

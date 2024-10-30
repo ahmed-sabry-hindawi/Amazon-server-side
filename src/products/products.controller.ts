@@ -55,7 +55,7 @@ export class ProductsController {
   async getProductsWithFiltering(
     @Query() x: { [key: string]: any },
   ): Promise<Product[]> {
-    console.log(x);
+   
 
     return this.productsService.getProductsWithFiltering(x);
   }

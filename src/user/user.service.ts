@@ -10,6 +10,8 @@ import { User } from './Schemas/users.schema';
 import { Model, ObjectId } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
 import { CreateUserDto } from './Dtos/createUser.dtos';
@@ -32,6 +34,46 @@ export class UserService {
       throw new Error(`Failed to fetch users: ${error.message}`);
     }
   }
+  async getUserById(id: string): Promise<UpdateUserDto> {
+    try {
+      const user = await this.userModel.findById(id).lean().exec();
+      if (!user) {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to get user by id: ${error.message}`);
+    }
+  }
+
+  //  this function to get user by email
+
+  async getUserByEmail(email: string): Promise<CreateUserDto> {
+    try {
+      const user = await this.userModel.findOne({ email }).lean().exec();
+      if (!user) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Failed to get user by email: ${error.message}`);
+    }
+  }
+
+  async getUsersByRole(role: string): Promise<User[]> {
+    try {
+      return await this.userModel.find({ role }).lean().exec();
+    } catch (error) {
+      throw new NotFoundException(`No users found with role ${role}`);
+    }
+  }
+  // #############################################################################
 
   async createNewUser(userData: CreateUserDto): Promise<UpdateUserDto> {
     try {
@@ -76,78 +118,6 @@ export class UserService {
     }
   }
   // ##############################
-
-  async updateUserPassword(
-    userId: ObjectId,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<void> {
-    try {
-      const user = await this.userModel.findById(userId);
-      if (!user) {
-        throw new NotFoundException(`User not found`);
-      }
-
-      const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Old password is incorrect');
-      }
-
-      if (oldPassword === newPassword) {
-        throw new BadRequestException(
-          'New password must be different from the old one',
-        );
-      }
-
-      const saltOrRounds = 10;
-      const hashedPassword = await bcrypt.hash(newPassword, saltOrRounds);
-      user.password = hashedPassword;
-      await user.save();
-    } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof UnauthorizedException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-      throw new Error(`Failed to update password: ${error.message}`);
-    }
-  }
-
-  // ##############################
-
-  async getUserById(id: string): Promise<UpdateUserDto> {
-    try {
-      const user = await this.userModel.findById(id).lean().exec();
-      if (!user) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new Error(`Failed to get user by id: ${error.message}`);
-    }
-  }
-
-  //  this function to get user by email
-
-  async getUserByEmail(email: string): Promise<CreateUserDto> {
-    try {
-      const user = await this.userModel.findOne({ email }).lean().exec();
-      if (!user) {
-        throw new NotFoundException(`User with email ${email} not found`);
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new Error(`Failed to get user by email: ${error.message}`);
-    }
-  }
 
   async verifyEmail(email?: string, token?: string): Promise<UpdateUserDto> {
     if (token) {
@@ -219,6 +189,43 @@ export class UserService {
         throw error;
       }
       throw new Error(`Failed to update user: ${error.message}`);
+    }
+  }
+  async updateUserPassword(
+    userId: ObjectId,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException(`User not found`);
+      }
+
+      const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Old password is incorrect');
+      }
+
+      if (oldPassword === newPassword) {
+        throw new BadRequestException(
+          'New password must be different from the old one',
+        );
+      }
+
+      const saltOrRounds = 10;
+      const hashedPassword = await bcrypt.hash(newPassword, saltOrRounds);
+      user.password = hashedPassword;
+      await user.save();
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new Error(`Failed to update password: ${error.message}`);
     }
   }
 

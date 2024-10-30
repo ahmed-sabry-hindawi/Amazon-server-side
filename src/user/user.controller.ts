@@ -4,9 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
-  HttpException,
   HttpStatus,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -21,10 +19,7 @@ import { AuthenticationGuard } from 'src/common/Guards/authentication/authentica
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
-import { HttpExceptionFilter } from 'src/http-exception.filter';
 import { CreateUserDto } from './Dtos/createUser.dtos';
-import { RateLimiterGuard, RateLimit } from 'nestjs-rate-limiter';
-import { User } from './Schemas/users.schema';
 
 @Controller('user')
 export class UserController {

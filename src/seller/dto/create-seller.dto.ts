@@ -48,7 +48,7 @@ export class CreateSellerDto {
 
   @IsDate()
   @Type(() => Date)
-  dateOfBirthDay: Date;
+  dateOfBirth: Date;
 
   @IsEnum(['National ID', 'Passport'])
   identityProof: 'National ID' | 'Passport';

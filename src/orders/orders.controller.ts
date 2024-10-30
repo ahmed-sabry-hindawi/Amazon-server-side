@@ -144,7 +144,7 @@ export class OrdersController {
     //first check if the order created by this user
     const userId = req.user.id;
     const userOrders = await this.ordersService.findByUserId(userId);
-    const isBelongTo = userOrders.find((order) => order.userId === userId);
+    const isBelongTo = userOrders.find((order) => order.userId == userId);
     if (!isBelongTo) {
       throw new ForbiddenException(
         'You are not authorized to update this order',

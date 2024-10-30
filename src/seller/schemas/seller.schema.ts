@@ -47,7 +47,7 @@ export class Seller extends Document {
   countryOfBirth: string;
 
   @Prop({ type: Date, required: true })
-  dateOfBirthDay: Date;
+  dateOfBirth: Date;
 
   @Prop({ enum: ['National ID', 'Passport'], required: true })
   identityProof: 'National ID' | 'Passport';

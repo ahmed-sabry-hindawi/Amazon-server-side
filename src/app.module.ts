@@ -16,15 +16,15 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShippingModule } from './shipping/shipping.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
-import { RateLimiterGuard, RateLimiterModule } from 'nestjs-rate-limiter';
-import { APP_GUARD } from '@nestjs/core';
+import { RateLimiterModule } from 'nestjs-rate-limiter';
+
 @Module({
   imports: [
     RateLimiterModule.register({
       for: 'Express', // or 'Fastify' if you use Fastify
       type: 'Memory', // or another store like 'Redis'
       keyPrefix: 'api-limit', // unique prefix for limit records
-      points: 5, // number of requests
+      points: 2, // number of requests
       duration: 60, // per duration in seconds
     }),
 
@@ -69,13 +69,6 @@ import { APP_GUARD } from '@nestjs/core';
   ],
 
   controllers: [AppController],
-  // providers: [AppService],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RateLimiterGuard,
-    },
-    AppService,
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

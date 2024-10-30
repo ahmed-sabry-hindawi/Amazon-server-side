@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   NotFoundException,
   Param,
@@ -23,11 +24,9 @@ import { UpdateUserDto } from './Dtos/UpdateUser.dtos';
 import { HttpExceptionFilter } from 'src/http-exception.filter';
 import { CreateUserDto } from './Dtos/createUser.dtos';
 import { RateLimiterGuard, RateLimit } from 'nestjs-rate-limiter';
+import { User } from './Schemas/users.schema';
 
 @Controller('user')
-// @UseFilters(new HttpExceptionFilter())
-// @UseGuards(RateLimiterGuard)
-@UseGuards(RateLimiterGuard)
 export class UserController {
   constructor(
     private readonly _UserService: UserService,
@@ -35,12 +34,15 @@ export class UserController {
   ) {}
 
   @Get('')
-  // @UseFilters(new HttpExceptionFilter())
   @HttpCode(HttpStatus.FOUND)
   @Roles('user', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async getAllUser(): Promise<UpdateUserDto[]> {
-    return this._UserService.getAllUsers();
+    try {
+      return this._UserService.getAllUsers();
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Get('/one')
@@ -49,19 +51,24 @@ export class UserController {
   @HttpCode(HttpStatus.FOUND)
   findUser(@Request() req): Promise<UpdateUserDto> {
     const userId = req.user.id; // Get user ID from the authenticated user
-
-    return this._UserService.getUserById(userId);
+    try {
+      return this._UserService.getUserById(userId);
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Post('register')
-  // @UseFilters(new HttpExceptionFilter())
   @HttpCode(HttpStatus.OK)
   async CreateUser(@Body() user: CreateUserDto): Promise<UpdateUserDto> {
-    return this._UserService.createNewUser(user);
+    try {
+      return this._UserService.createNewUser(user);
+    } catch (error) {
+      throw error;
+    }
   }
   @Post('verifyEmail')
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   async verifyEmail(
     @Body('email') email?: string,
     @Body('token') token?: string,
@@ -79,7 +86,6 @@ export class UserController {
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   async login(
     @Body() user: Login,
   ): Promise<{ token: string; email: string; userName: string }> {
@@ -89,7 +95,6 @@ export class UserController {
   @Patch('update/password')
   @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updatePassword(
     @Request() req,
@@ -108,7 +113,6 @@ export class UserController {
   @Delete('')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
-  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   DeleteUser(@Request() req): Promise<void> {
     const userId = req.user.id; // Get user ID from the authenticated user
@@ -118,7 +122,6 @@ export class UserController {
   @Patch('/:id')
   @Roles('user', 'admin')
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   UpdateUserDto(
     @Request() req,
@@ -131,7 +134,6 @@ export class UserController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   async forgotPassword(
     @Body('email') email: string,
   ): Promise<{ message: string }> {
@@ -150,6 +152,17 @@ export class UserController {
   }
 
   //  Admin Section
+
+  // get users by role
+
+  @Get('/role/:role')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async getUsersByRole(@Param('role') role: string): Promise<UpdateUserDto[]> {
+    return await this._UserService.getUsersByRole(role);
+  }
+
   // get user by admin
   @Get('/:id')
   @Roles('admin')
@@ -177,7 +190,6 @@ export class UserController {
   @Roles('admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.OK)
-  // @UseFilters(new HttpExceptionFilter())
   async updateUserByAdmin(
     @Request() req,
     @Param('userId') userId: string,

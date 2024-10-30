@@ -5,13 +5,17 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   InternalServerErrorException,
   Param,
   Post,
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Product } from './schemas/product.schema';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
@@ -20,10 +24,15 @@ import { AuthenticationGuard } from 'src/common/Guards/authentication/authentica
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { Types } from 'mongoose';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private productsService: ProductsService) {}
+  constructor(
+    private productsService: ProductsService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   // Routes with specific paths should come first
   @Get('sort')
@@ -89,7 +98,7 @@ export class ProductsController {
   //   );
   // }
 
-    @Get('advanced-filter')
+  @Get('advanced-filter')
   async getProductsWithAdvancedFiltering(
     @Query('filters') filters: { [key: string]: any },
     @Query('pagination') pagination: { page: number; limit: number },
@@ -102,7 +111,7 @@ export class ProductsController {
       sorting,
     );
   }
-  
+
   @Get('search')
   async getProductsBySearchQuery(
     @Query('query') query: string,
@@ -162,7 +171,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async createProduct(
     @Body() createProductDto: CreateProductDto,
@@ -181,7 +190,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('seller')
+  @Roles('seller',"admin")
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,
@@ -191,7 +200,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async deleteProduct(@Param('id') productId: string): Promise<void> {
     return this.productsService.deleteProduct(productId);
@@ -217,18 +226,38 @@ export class ProductsController {
     return this.productsService.removeReviewFromProduct(productId, reviewId);
   }
 
+  // @Post(':id/images')
+  // @Roles('seller')
+  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  // async addImageToProduct(
+  //   @Param('id') productId: string,
+  //   @Body('imageUrl') imageUrl: string,
+  // ): Promise<Product> {
+  //   return this.productsService.addImageToProduct(productId, imageUrl);
+  // }
+
   @Post(':id/images')
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @UseInterceptors(FileInterceptor('image')) // Expecting an image file in the form data
   async addImageToProduct(
     @Param('id') productId: string,
-    @Body('imageUrl') imageUrl: string,
+    @UploadedFile() file: Express.Multer.File,
   ): Promise<Product> {
-    return this.productsService.addImageToProduct(productId, imageUrl);
+    if (!file) {
+      throw new HttpException('Image file is required', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const imageUrl = await this.cloudinaryService.uploadImage(file);
+      return this.productsService.addImageToProduct(productId, imageUrl);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Delete(':id/images')
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async removeImageFromProduct(
     @Param('id') productId: string,
@@ -238,7 +267,7 @@ export class ProductsController {
   }
 
   @Put(':id/stock')
-  @Roles('seller')
+  @Roles('admin', 'seller')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProductStock(
     @Param('id') productId: string,

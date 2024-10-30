@@ -25,16 +25,30 @@ export class PaymentsController {
     @Req() req,
     @Body('amount') amount: number,
     @Body('currency') currency: string,
+    @Body('order_ID') order_ID: string,
   ) {
     const userId = req.user.id;
-    return this.paymentService.createPayment(userId, amount, currency);
+    return this.paymentService.createPayment(
+      userId,
+      amount,
+      currency,
+      order_ID,
+    );
   }
 
   @Post('capture/:orderId')
-  async capturePayment(@Param('orderId') orderId: string, @Req() req) {
+  async capturePayment(
+    @Param('orderId') orderId: string,
+    @Req() req,
+    @Body('order_ID') order_ID: string,
+  ) {
     try {
       const userId = req.user.id;
-      return await this.paymentService.capturePayment(orderId, userId);
+      return await this.paymentService.capturePayment(
+        orderId,
+        userId,
+        order_ID,
+      );
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;

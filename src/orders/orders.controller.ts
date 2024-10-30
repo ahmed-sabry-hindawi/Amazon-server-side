@@ -133,6 +133,34 @@ export class OrdersController {
 
   ////////////////// stoppp
 
+  // Update order address for the user
+  @Patch('address/:id')
+  async updateOrderAddress(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateOrderDto: UpdateOrderDto, // Assuming this DTO includes only the address
+  ): Promise<Order> {
+    const userId = req.user.id;
+
+    // Check if the order belongs to the user
+    const order = await this.ordersService.findById(id);
+    // console.log(order.userId._id.toString(), userId);
+
+    if (!order || order.userId._id.toString() !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to update this order address',
+      );
+    }
+
+    // Update the order address
+    order.shippingAddress = updateOrderDto.shippingAddress;
+    const updatedOrder = await this.ordersService.updateById(
+      id,
+      updateOrderDto,
+    );
+    return updatedOrder;
+  }
+
   // Update order by ID
   // need to check the update criteria
   @Patch(':id')
@@ -144,7 +172,10 @@ export class OrdersController {
     //first check if the order created by this user
     const userId = req.user.id;
     const userOrders = await this.ordersService.findByUserId(userId);
-    const isBelongTo = userOrders.find((order) => order.userId === userId);
+
+    const isBelongTo = userOrders.find((order) => {
+      return order.userId._id.toString() == userId;
+    });
     if (!isBelongTo) {
       throw new ForbiddenException(
         'You are not authorized to update this order',

@@ -16,6 +16,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShippingModule } from './shipping/shipping.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { SellerModule } from './seller/seller.module';
+
 
 @Module({
   imports: [
@@ -56,6 +58,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ReviewsModule,
     CartsModule,
     ShippingModule,
+    SellerModule,
     CloudinaryModule,
   ],
 

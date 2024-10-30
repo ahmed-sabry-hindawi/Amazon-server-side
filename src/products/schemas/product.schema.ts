@@ -6,6 +6,8 @@ export class Product extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   sellerId: Types.ObjectId;
 
+  //sellerId ref should be seller
+
   @Prop({ type: [Types.ObjectId], ref: 'Review' })
   reviews: Types.ObjectId[];
 

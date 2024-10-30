@@ -30,29 +30,20 @@ export class UserController {
 
   @Get('')
   @HttpCode(HttpStatus.FOUND)
-  @Roles('admin')
+  @Roles('user', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async getAllUser(): Promise<UpdateUserDto[]> {
     return this._UserService.getAllUsers();
   }
 
-
   @Get('/one')
-  @Roles('user','admin')
+  @Roles('user', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @HttpCode(HttpStatus.FOUND)
-  findUser( @Request() req): Promise<UpdateUserDto> {
-        const userId = req.user.id; // Get user ID from the authenticated user
+  findUser(@Request() req): Promise<UpdateUserDto> {
+    const userId = req.user.id; // Get user ID from the authenticated user
 
     return this._UserService.getUserById(userId);
-  }
-
-  @Get('/:id')
-  @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  @HttpCode(HttpStatus.FOUND)
-  findUserForAdmin(@Param('id') id): Promise<UpdateUserDto> {
-    return this._UserService.getUserById(id);
   }
 
   @Post('register')
@@ -65,12 +56,15 @@ export class UserController {
   async verifyEmail(
     @Body('email') email?: string,
     @Body('token') token?: string,
-  ): Promise<{ message: string ,userData:any }> {
-   let user= await this._UserService.verifyEmail(email, token);
+  ): Promise<{ message: string; userData: any }> {
+    let user = await this._UserService.verifyEmail(email, token);
     if (token) {
-      return { message: 'Email verified successfully',userData:user };
+      return { message: 'Email verified successfully', userData: user };
     } else {
-      return { message: 'Email is already verified, you can log in',userData:'Not Found any user ' };
+      return {
+        message: 'Email is already verified, you can log in',
+        userData: 'Not Found any user ',
+      };
     }
   }
 
@@ -105,7 +99,7 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   DeleteUser(@Request() req): Promise<void> {
-   const userId = req.user.id; // Get user ID from the authenticated user
+    const userId = req.user.id; // Get user ID from the authenticated user
 
     return this._UserService.deleteUser(userId);
   }
@@ -139,5 +133,54 @@ export class UserController {
   ): Promise<{ message: string }> {
     await this._UserService.resetPassword(token, newPassword);
     return { message: 'Password reset successfully' };
+  }
+
+  //  Admin Section
+  // get user by admin
+  @Get('/:id')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @HttpCode(HttpStatus.FOUND)
+  findUserForAdmin(@Param('id') id): Promise<UpdateUserDto> {
+    return this._UserService.getUserById(id);
+  }
+
+  // create user by admin
+  @Post('admin/create')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async createUserByAdmin(
+    @Request() req,
+    @Body() userData: CreateUserDto,
+  ): Promise<UpdateUserDto> {
+    const adminId = req.user.id;
+    return this._UserService.createUserByAdmin(adminId, userData);
+  }
+
+  // update user by admin
+  @Patch('admin/update/:userId')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateUserByAdmin(
+    @Request() req,
+    @Param('userId') userId: string,
+    @Body() userData: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
+    const adminId = req.user.id;
+    return this._UserService.updateUserByAdmin(adminId, userId, userData);
+  }
+
+  // delete user by admin
+  @Delete('admin/delete/:userId')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @HttpCode(HttpStatus.OK) // تغيير من NO_CONTENT إلى OK
+  async deleteUserByAdmin(
+    @Param('userId') userId: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.deleteUser(userId);
+    return { message: 'User deleted successfully' };
   }
 } // class

@@ -7,132 +7,137 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Shipping } from './Schemas/shipping.schema';
 import { CreateShippingDto } from './Dtos/createSipping.dtos';
+import { UpdateShippingDto } from './Dtos/updateShippingDto';
 
 @Injectable()
 export class ShippingService {
   constructor(
     @InjectModel(Shipping.name) private readonly shippingModel: Model<Shipping>,
   ) {}
-// create shipping
-  async createShipping(createShippingDto: any): Promise<Shipping> {
-    try {
-      // Ensure the DTO is valid before passing it to the model
-      const createdShipping = new this.shippingModel(createShippingDto);
 
-      // Save the shipping document and return the result
-      return await createdShipping.save();
-    } catch (error) {
-      // Add proper error handling, for example, logging the error or specifying the error type
-      console.error('Error occurred while creating shipping:', error.message);
-
-      // Handle specific errors (e.g., validation errors) and provide more helpful messages
-      if (error.name === 'ValidationError') {
-        throw new Error('Invalid data provided for shipping creation');
-      }
-      throw new Error('Failed to create shipping');
-    }
-  }
-  // get shipping by id
-
-  async getShippingById(id: ObjectId): Promise<Shipping> {
-    try {
-      const shipping = await this.shippingModel.findById(id).exec();
-      if (!shipping) {
-        throw new NotFoundException('Shipping not found');
-      }
-      return shipping;
-    } catch (error) {
-      throw new Error('Failed to get shipping by id');
-    }
-  }
-  // update shipping
-
-  async updateShipping(
-    id: ObjectId,
-    updateShippingDto: CreateShippingDto,
+  async createShipping(
+    createShippingDto: CreateShippingDto,
   ): Promise<Shipping> {
-    try {
-      const updatedShipping = await this.shippingModel
-        .findByIdAndUpdate(id, updateShippingDto, {
-          new: true,
-          runValidators: true,
-        })
-        .lean()
-        .exec();
-      if (!updatedShipping) {
-        throw new NotFoundException(`Shipping with id ${id} not found`);
-      }
-      return updatedShipping;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      if (error.name === 'ValidationError') {
-        throw new BadRequestException(error.message);
-      }
-      throw new Error(`Failed to update shipping: ${error.message}`);
-    }
+    const shipping = new this.shippingModel({
+      ...createShippingDto,
+    });
+    return shipping.save();
   }
-// delete shipping
-  async deleteShipping(id: ObjectId): Promise<void> {
-    try {
-      const result = await this.shippingModel.findByIdAndDelete(id).exec();
-      if (!result) {
-        throw new NotFoundException(`Shipping with id ${id} not found`);
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new Error(`Failed to delete shipping: ${error.message}`);
-    }
-  }
-// get all shippings
-  async getAllShippings(): Promise<Shipping[]> {
-    try {
-      const shippings = await this.shippingModel
-        .find()
-        .populate('orderId')
-        .exec();
-      return shippings;
-    } catch (error) {
-      throw new Error('Failed to get all shippings');
-    }
-  }
-  // get shippings by status
-  async getShippingsByStatus(status: string): Promise<Shipping[]> {
-    try {
-      return await this.shippingModel.find({ status }).lean().exec();
-    } catch (error) {
-      throw new Error(`فشل في الحصول على الشحنات حسب الحالة: ${error.message}`);
+
+  async deleteShipping(id: string): Promise<void> {
+    const result = await this.shippingModel.findByIdAndDelete(id);
+    if (!result) {
+      throw new NotFoundException('Shipping not found');
     }
   }
 
-  // get shippings by order id
-  async getShippingsByOrderId(orderId: ObjectId): Promise<Shipping[]> {
-    try {
-      return await this.shippingModel.find({ orderId }).lean().exec();
-    } catch (error) {
-      throw new Error(`فشل في الحصول على الشحنات حسب رقم الطلب: ${error.message}`);
+  // get the last shipping addresses of the user
+  async getLastShippingAddresses(userId: string): Promise<Shipping[]> {
+    const shippingAddresses = await this.shippingModel
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .exec();
+    if (shippingAddresses.length === 0) {
+      throw new NotFoundException('No shipping addresses found');
+    }
+    return shippingAddresses;
+  }
+
+  // update the shipping address by id
+  async updateShippingAddress(
+    userId: string,
+    shippingId: string,
+    updateShippingDto: UpdateShippingDto,
+  ): Promise<Shipping> {
+    const shipping = await this.shippingModel.findByIdAndUpdate(
+      shippingId,
+      updateShippingDto,
+      { new: true },
+    );
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
+    }
+    if (shipping.userId.toString() !== userId) {
+      throw new BadRequestException(
+        'Unauthorized to update this shipping address',
+      );
+    }
+    return shipping;
+  }
+  // get the active address for the user
+  async getActiveShippingAddress(userId: string): Promise<Shipping> {
+    const shipping = await this.shippingModel.findOne({
+      userId,
+      isActive: true,
+    });
+    if (!shipping) {
+      throw new NotFoundException('No active shipping address found');
+    }
+    return shipping;
+  }
+  // get the shipping address by id
+  async getShippingById(id: string): Promise<Shipping> {
+    const shipping = await this.shippingModel.findById(id);
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
+    }
+    return shipping;
+  }
+
+  // get all addresses for user
+  async getAllShippingAddresses(userId: string): Promise<Shipping[]> {
+    const shippingAddresses = await this.shippingModel.find({ userId }).exec();
+    if (shippingAddresses.length === 0) {
+      throw new NotFoundException('No shipping addresses found');
+    }
+    return shippingAddresses;
+  }
+  // update the shipping status to inactive by id
+  async deactivateShipping(userId: string, shippingId: string): Promise<void> {
+    const shipping = await this.shippingModel.findByIdAndUpdate(
+      shippingId,
+      { isActive: false },
+      { new: true },
+    );
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
+    }
+    if (shipping.userId.toString() !== userId) {
+      throw new BadRequestException(
+        'Unauthorized to deactivate this shipping address',
+      );
     }
   }
-  // update shipping status
 
-  async updateShippingStatus(id: ObjectId, status: string): Promise<Shipping> {
-    try {
-      const updatedShipping = await this.shippingModel
-        .findByIdAndUpdate(id, { status }, { new: true, runValidators: true })
-        .lean()
-        .exec();
-      if (!updatedShipping) {
-        throw new NotFoundException(`لم يتم العثور على شحنة برقم ${id}`);
-      }
-      return updatedShipping;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new Error(`فشل في تحديث حالة الشحنة: ${error.message}`);
+  // update the shipping status to active by id
+  async activateShipping(userId: string, shippingId: string): Promise<void> {
+    const shipping = await this.shippingModel.findByIdAndUpdate(
+      shippingId,
+      { isActive: true },
+      { new: true },
+    );
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
     }
+    if (shipping.userId.toString() !== userId) {
+      throw new BadRequestException(
+        'Unauthorized to activate this shipping address',
+      );
+    }
+  }
+
+  // get the shipping address status
+  async getShippingStatus(userId: string, shippingId: string): Promise<string> {
+    const shipping = await this.shippingModel.findById(shippingId);
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
+    }
+    if (shipping.userId.toString() !== userId) {
+      throw new BadRequestException(
+        'Unauthorized to view this shipping address',
+      );
+    }
+    return shipping.isActive ? 'Active' : 'Inactive';
   }
 }

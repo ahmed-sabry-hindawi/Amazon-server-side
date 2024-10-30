@@ -22,7 +22,12 @@ export class PaymentService {
     this.payPalClient = new paypal.core.PayPalHttpClient(environment);
   }
 
-  async createPayment(userId: string, amount: number, currency: string) {
+  async createPayment(
+    userId: string,
+    amount: number,
+    currency: string,
+    order_ID: string,
+  ) {
     // Ensure amount is a number
     const numericAmount = Number(amount);
     if (isNaN(numericAmount)) {
@@ -48,7 +53,7 @@ export class PaymentService {
 
       await this.storePayment({
         userId,
-        orderId,
+        orderId: order_ID,
         amount,
         transactionId: orderId,
         status: PaymentStatus.PENDING,
@@ -63,16 +68,19 @@ export class PaymentService {
     }
   }
 
-  async capturePayment(orderId: string, userId: string) {
+  async capturePayment(orderId: string, userId: string, order_ID: string) {
     try {
-      const payment = await this.paymentModel.findOne({ orderId, userId });
+      const payment = await this.paymentModel.findOne({
+        orderId: order_ID,
+        userId,
+      });
       if (!payment) {
         throw new BadRequestException('Payment not found or unauthorized');
       }
 
       const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
       const capture = await this.payPalClient.execute(captureRequest);
-      await this.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
+      await this.updatePaymentStatus(order_ID, PaymentStatus.COMPLETED);
       return capture.result;
     } catch (error) {
       console.error(`Capture Payment Error: ${error.message}`);
@@ -145,7 +153,9 @@ export class PaymentService {
   }
 
   private async updatePaymentStatus(orderId: string, status: PaymentStatus) {
-    await this.paymentModel.findOneAndUpdate({ orderId }, { status }).exec();
+    await this.paymentModel
+      .findOneAndUpdate({ orderId: orderId }, { status })
+      .exec();
   }
 
   async createCashOnDeliveryPayment(

@@ -152,7 +152,9 @@ export class ProductsController {
     @Query('maxPrice') maxPrice?: string,
     @Query('sortBy') sortBy: 'price' | 'name' = 'price',
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
-  ): Promise<Product[]> {
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ products: Product[]; totalCount: number }> {
     return this.productsService.getFilteredProducts(
       categoryId,
       brand,
@@ -160,6 +162,8 @@ export class ProductsController {
       maxPrice ? parseFloat(maxPrice) : undefined,
       sortBy,
       sortOrder,
+      page,
+      limit,
     );
   }
 

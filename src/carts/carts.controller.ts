@@ -66,16 +66,10 @@ export class CartsController {
   @UseGuards(AuthenticationGuard)
   @Roles('user')
   async findByUserId(@Request() req): Promise<Cart> {
+    
     try {
       const userId = req.user.id;
-      let cart = await this.cartsService.findByUserId(userId);
-      if (!cart) {
-        cart = await this.cartsService.create({
-          userId,
-          items: [],
-          totalPrice: 0,
-        } as CreateCartDto);
-      }
+    const cart = await this.cartsService.findByUserId(userId);
       return cart;
     } catch (error) {
       throw new InternalServerErrorException('Failed to retrieve cart');

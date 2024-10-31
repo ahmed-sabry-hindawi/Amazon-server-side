@@ -131,7 +131,7 @@ export class OrdersController {
     return await this.ordersService.findByStatus(status);
   }
 
-  ////////////////// stoppp
+  ////////////////// stop
 
   // Update order address for the user
   @Patch('address/:id')

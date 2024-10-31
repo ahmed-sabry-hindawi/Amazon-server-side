@@ -68,7 +68,15 @@ export class CartsController {
   async findByUserId(@Request() req): Promise<Cart> {
     try {
       const userId = req.user.id;
-      return await this.cartsService.findByUserId(userId);
+      let cart = await this.cartsService.findByUserId(userId);
+      if (!cart) {
+        cart = await this.cartsService.create({
+          userId,
+          items: [],
+          totalPrice: 0,
+        } as CreateCartDto);
+      }
+      return cart;
     } catch (error) {
       throw new InternalServerErrorException('Failed to retrieve cart');
     }

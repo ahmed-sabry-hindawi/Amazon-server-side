@@ -517,7 +517,9 @@ export class ProductsService {
     maxPrice?: number,
     sortBy: 'price' | 'name' = 'price',
     sortOrder: 'asc' | 'desc' = 'desc',
-  ): Promise<Product[]> {
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<{ products: Product[]; totalCount: number }> {
     try {
       let query = this.productModel.find();
 
@@ -538,8 +540,16 @@ export class ProductsService {
 
       query = query.sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });
 
-      const products = await query.populate('subcategoryId').exec();
-      return products;
+      const totalCount = await this.productModel
+        .countDocuments(query.getFilter())
+        .exec();
+      const products = await query
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('subcategoryId')
+        .exec();
+
+      return { products, totalCount };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

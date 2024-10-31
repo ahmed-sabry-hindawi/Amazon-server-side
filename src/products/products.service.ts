@@ -71,12 +71,14 @@ export class ProductsService {
     sellerId: Types.ObjectId,
   ): Promise<Product> {
     try {
-      const newProduct = { ...product, sellerId }; // Assign sellerId to product
-      const createdProduct = await this.productModel.create(newProduct); // Save to DB
+      const newProduct = {
+        ...product,
+        sellerId,
+        isVerified: false,
+      };
+      const createdProduct = await this.productModel.create(newProduct);
       return createdProduct;
     } catch (error) {
-      console.log('Seller ID:', sellerId); // Log sellerId for debugging if needed
-
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -169,8 +171,10 @@ export class ProductsService {
   //   }
   // }
 
-
-  async addImageToProduct(productId: string, imageUrl: string): Promise<Product> {
+  async addImageToProduct(
+    productId: string,
+    imageUrl: string,
+  ): Promise<Product> {
     try {
       const product = await this.productModel
         .findByIdAndUpdate(
@@ -187,10 +191,6 @@ export class ProductsService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
-
-
-
 
   async removeImageFromProduct(
     productId: string,
@@ -379,7 +379,7 @@ export class ProductsService {
   //   }
   // }
 
- async getProductsWithAdvancedFiltering(
+  async getProductsWithAdvancedFiltering(
     filters: { [key: string]: any },
     pagination: { page: number; limit: number },
     sorting: { sortBy: string; order: 'asc' | 'desc' },
@@ -387,16 +387,25 @@ export class ProductsService {
     try {
       // Validate pagination
       if (pagination.page < 1 || pagination.limit < 1) {
-        throw new HttpException('Invalid pagination values', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Invalid pagination values',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // Validate sorting
       const validSortFields = ['name', 'price', 'createdAt', 'updatedAt']; // Add valid sort fields here
       if (!validSortFields.includes(sorting.sortBy)) {
-        throw new HttpException(`Invalid sort field: ${sorting.sortBy}`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          `Invalid sort field: ${sorting.sortBy}`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
       if (!['asc', 'desc'].includes(sorting.order)) {
-        throw new HttpException(`Invalid sort order: ${sorting.order}`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          `Invalid sort order: ${sorting.order}`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // Count total documents matching filters
@@ -416,8 +425,6 @@ export class ProductsService {
     }
   }
 
-
-  
   async filterProductsByPrice() {
     try {
       const products = await this.productModel
@@ -533,6 +540,23 @@ export class ProductsService {
 
       const products = await query.populate('subcategoryId').exec();
       return products;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  // for admin
+  async updateProductVerification(
+    productId: string,
+    isVerified: boolean,
+  ): Promise<Product> {
+    try {
+      const updatedProduct = await this.productModel
+        .findByIdAndUpdate(productId, { isVerified }, { new: true })
+        .exec();
+      if (!updatedProduct) {
+        throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+      }
+      return updatedProduct;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

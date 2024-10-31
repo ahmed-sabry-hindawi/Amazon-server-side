@@ -55,8 +55,6 @@ export class ProductsController {
   async getProductsWithFiltering(
     @Query() x: { [key: string]: any },
   ): Promise<Product[]> {
-   
-
     return this.productsService.getProductsWithFiltering(x);
   }
   /************************************************************************* */
@@ -190,7 +188,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('seller',"admin")
+  @Roles('seller', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,
@@ -274,5 +272,18 @@ export class ProductsController {
     @Body('stock') stock: number,
   ): Promise<Product> {
     return this.productsService.updateProductStock(productId, stock);
+  }
+
+  @Put(':id/verify')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async updateProductVerification(
+    @Param('id') productId: string,
+    @Body('isVerified') isVerified: boolean,
+  ): Promise<Product> {
+    return this.productsService.updateProductVerification(
+      productId,
+      isVerified,
+    );
   }
 }

@@ -42,17 +42,23 @@ export class CartsService {
   // Get cart by user ID test
   async findByUserId(userId: string): Promise<Cart> {
     try {
-      const cart = await this.cartModel
+      let cart = await this.cartModel
         .findOne({ userId })
-        .populate('userId')
+        .populate({ path: 'userId', select: '-password' })
         .populate({ path: 'items.productId', model: 'Product' });
-      // Populating productId within items array
+
+      // If no cart exists, create a new one
       if (!cart) {
-        throw new NotFoundException(`Cart for user ID ${userId} not found`);
+        cart = await this.create({
+          userId,
+          items: [],
+          totalPrice: 0,
+        } as CreateCartDto);
       }
+      
       return cart;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to retrieve cart');
+      throw new InternalServerErrorException('Failed to retrieve cart from DB');
     }
   }
 

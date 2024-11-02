@@ -282,7 +282,7 @@ export class ProductsService {
     try {
       const totalCount = await this.productModel.countDocuments().exec();
       const products = await this.productModel
-        .find()
+        .find().populate(['sellerId', 'reviews', 'subcategoryId'])
         .skip((page - 1) * limit)
         .limit(limit)
         .exec();

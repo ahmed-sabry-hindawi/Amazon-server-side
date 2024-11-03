@@ -282,10 +282,33 @@ export class ProductsService {
     try {
       const totalCount = await this.productModel.countDocuments().exec();
       const products = await this.productModel
-        .find().populate(['sellerId', 'reviews', 'subcategoryId'])
+        .find()
+        .populate(['sellerId', 'reviews', 'subcategoryId'])
         .skip((page - 1) * limit)
         .limit(limit)
         .exec();
+      return { products, totalCount };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getSellerProductsWithPagination(
+    sellerId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ products: Product[]; totalCount: number }> {
+    try {
+      const totalCount = await this.productModel
+        .countDocuments({ sellerId: new Types.ObjectId(sellerId) })
+        .exec();
+
+      const products = await this.productModel
+        .find({ sellerId: new Types.ObjectId(sellerId) })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec();
+
       return { products, totalCount };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -567,6 +590,21 @@ export class ProductsService {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
       }
       return updatedProduct;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async verifyAllProducts(): Promise<{ modifiedCount: number }> {
+    try {
+      const result = await this.productModel
+        .updateMany(
+          {}, // Empty filter to match all products
+          { isVerified: true }, // Set isVerified to true for all products
+        )
+        .exec();
+
+      return { modifiedCount: result.modifiedCount };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

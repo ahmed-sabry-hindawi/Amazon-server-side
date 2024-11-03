@@ -124,11 +124,26 @@ export class ProductsController {
     return this.productsService.getProductsByCategory(subcategoryId);
   }
 
-  @Get('seller/:sellerId')
-  async getProductsBySeller(
-    @Param('sellerId') sellerId: string,
-  ): Promise<Product[]> {
-    return this.productsService.getProductsBySeller(sellerId);
+  @Get('seller/products')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Roles('seller', 'admin')
+  async getSellerProductsWithPagination(
+    @Req() req: any,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ products: Product[]; totalCount: number }> {
+    const sellerId = req.user.id;
+    console.log(sellerId, '🔴🔴');
+
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new BadRequestException('Invalid sellerId');
+    }
+
+    return this.productsService.getSellerProductsWithPagination(
+      sellerId,
+      page,
+      limit,
+    );
   }
 
   @Get('highlighted-reviews/:id')
@@ -165,6 +180,17 @@ export class ProductsController {
       page,
       limit,
     );
+  }
+
+  @Put('verify-all')
+  // @Roles('admin')
+  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async verifyAllProducts(): Promise<{ modifiedCount: number }> {
+    try {
+      return await this.productsService.verifyAllProducts();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')

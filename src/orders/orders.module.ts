@@ -13,6 +13,6 @@ import { CartsModule } from 'src/carts/carts.module';
   imports:[MongooseModule.forFeature([{name:Order.name,schema:OrderSchema},{name:Cart.name,schema:CartSchema},{name:User.name,schema:UserSchema}]),UserModule,CartsModule],
   controllers: [OrdersController],
   providers: [OrdersService, CartsService],
-  exports: [MongooseModule],
+  exports: [MongooseModule, OrdersService],
 })
 export class OrdersModule{}

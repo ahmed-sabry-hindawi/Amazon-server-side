@@ -336,4 +336,24 @@ export class UserService {
       throw new Error(`Failed to update user by admin: ${error.message}`);
     }
   }
+
+  async adminResetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.userModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+      role: 'admin',
+    });
+
+    if (!user) {
+      throw new NotFoundException(
+        'Password reset token is invalid or has expired, or user is not an admin',
+      );
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+  }
 }

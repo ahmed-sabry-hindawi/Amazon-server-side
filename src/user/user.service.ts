@@ -398,7 +398,7 @@ export class UserService {
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
 
     try {
-      await this.emailService.sendVerificationEmailForAdmin(
+      await this.emailService.sendAdminPasswordResetEmail(
         user.email,
         resetToken,
       );

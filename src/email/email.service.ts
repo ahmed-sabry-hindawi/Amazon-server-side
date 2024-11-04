@@ -1,123 +1,189 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
-  private readonly logger = new Logger(EmailService.name);
 
   constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: this.configService.get<string>('GMAIL_USER'),
-        pass: this.configService.get<string>('GMAIL_PASS'),
+        user: this.configService.get('GMAIL_USER'),
+        pass: this.configService.get('GMAIL_APP_PASSWORD'),
       },
     });
   }
 
   async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const mailOptions = {
-      from: ' Amazon Website <samman66512@gmail.com>',
-      to: to,
-      subject: 'Verify Your Email Address',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #232f3e;">Welcome to Amazon !</h2>
-          <p>Hello ${to},</p>
-          <p>Thank you for signing up. To complete your registration, please verify your email address by clicking the button below:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="https://amazon-client-side-iti.vercel.app/verifyEmail?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Verify Email Address</a>
-          </div>
-          <p>If you didn't create an account, you can safely ignore this email.</p>
-          <p>Best regards,<br>Your Amazon Team</p>
-        </div>
-      `,
-    };
+    const verificationLink = `${this.configService.get('FRONTEND_URL_CLIENT')}/verify/${token}`;
 
-    await this.transporter.sendMail(mailOptions);
-  }
-
-  async sendPasswordResetEmailForAdmin(
-    to: string,
-    token: string,
-  ): Promise<void> {
-    const mailOptions = {
-      from: 'Amazon Admin Portal <noreply@amazon.com>',
-      to: to,
-      subject: 'Admin Password Reset Request - Amazon',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon Logo" style="max-width: 150px;">
+    const emailTemplate = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .header {
+              text-align: center;
+              padding: 20px;
+              background-color: #ffffff;
+            }
+            .amazon-logo {
+              display: inline-block;
+              position: relative;
+              padding: 20px;
+            }
+            .amazon-text {
+              font-family: Arial, sans-serif;
+              font-size: 50px;
+              font-weight: bold;
+              color: #232F3E;
+              text-decoration: none;
+              position: relative;
+            }
+            .amazon-smile {
+              position: absolute;
+              right: 20px;
+              bottom: 18px;
+              width: 22px;
+              height: 22px;
+              border: 6px solid #FF9900;
+              border-top: 0;
+              border-left: 0;
+              transform: rotate(45deg);
+            }
+            .email-container {
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              font-family: Arial, sans-serif;
+            }
+            .button {
+              background-color: #FF9900;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 4px;
+              display: inline-block;
+              margin: 20px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <div class="amazon-logo">
+                <span class="amazon-text">amazon</span>
+                <span class="amazon-smile"></span>
+              </div>
+            </div>
+            <div class="content">
+              <h1>Verify Your Email Address</h1>
+              <p>Thank you for registering. Please click the button below to verify your email address:</p>
+              <a href="${verificationLink}" class="button">Verify Email</a>
+            </div>
           </div>
-          
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-            <h2 style="color: #232f3e; margin-bottom: 15px;">Admin Password Reset Request</h2>
-            <p style="color: #666; margin-bottom: 10px;">Hello Administrator,</p>
-            <p style="color: #666; line-height: 1.5;">A password reset was requested for your admin account. For security reasons, this link will expire in 60 minutes.</p>
-          </div>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="https://amazon-dashboard-angular-iti--eight.vercel.app/dashboard/ResetPassword?token=${token}" 
-               style="background-color: #ff9900; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-              Reset Admin Password
-            </a>
-          </div>
-
-          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px;">
-            <p style="color: #666; margin-bottom: 10px; font-size: 14px;">⚠️ Security Notice:</p>
-            <ul style="color: #666; font-size: 14px; padding-left: 20px;">
-              <li>If you didn't request this password reset, please contact IT security immediately.</li>
-              <li>Never share this reset link with anyone.</li>
-              <li>Ensure you're using a secure network when resetting your password.</li>
-            </ul>
-          </div>
-
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px;">
-            <p>This is an automated message, please do not reply to this email.</p>
-            <p>Amazon Admin Portal © ${new Date().getFullYear()} All rights reserved.</p>
-          </div>
-        </div>
-      `,
-    };
+        </body>
+      </html>
+    `;
 
     try {
-      await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Password reset email sent successfully to admin: ${to}`);
+      await this.transporter.sendMail({
+        from: this.configService.get('GMAIL_USER'),
+        to: to,
+        subject: 'Verify Your Email Address',
+        html: emailTemplate,
+      });
     } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email to admin: ${to}`,
-        error.stack,
-      );
-      throw new Error('Failed to send password reset email');
+      throw new Error('Failed to send verification email');
     }
   }
 
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
-    const mailOptions = {
-      from: ' Amazon Website <samman66512@gmail.com>',
-      to: to,
-      subject: 'Password Reset Request',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #232f3e;">Welcome to Amazon !</h2>
+    const resetLink = `${this.configService.get('FRONTEND_URL_CLIENT')}/reset-password/${token}`;
 
-          <h4 style="color: #232f3e;">Password Reset Request</h4>
-          <p>Hello ${to},</p>
-          <p>We received a request to reset the password for your account. To proceed with resetting your password, please click the button below:</p>
-          <div style="text-align: center; margin: 30px 0;">
-
-            <a href="https://amazon-client-side-iti.vercel.app/ResetPassword?token=${token}" style="background-color: #ff9900; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;">Reset Password</a>
-
+    const emailTemplate = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .header {
+              text-align: center;
+              padding: 20px;
+              background-color: #ffffff;
+            }
+            .amazon-logo {
+              display: inline-block;
+              position: relative;
+              padding: 20px;
+            }
+            .amazon-text {
+              font-family: Arial, sans-serif;
+              font-size: 50px;
+              font-weight: bold;
+              color: #232F3E;
+              text-decoration: none;
+              position: relative;
+            }
+            .amazon-smile {
+              position: absolute;
+              right: 20px;
+              bottom: 18px;
+              width: 22px;
+              height: 22px;
+              border: 6px solid #FF9900;
+              border-top: 0;
+              border-left: 0;
+              transform: rotate(45deg);
+            }
+            .email-container {
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              font-family: Arial, sans-serif;
+            }
+            .button {
+              background-color: #FF9900;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 4px;
+              display: inline-block;
+              margin: 20px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <div class="amazon-logo">
+                <span class="amazon-text">amazon</span>
+                <span class="amazon-smile"></span>
+              </div>
+            </div>
+            <div class="content">
+              <h1>Reset Your Password</h1>
+              <p>We received a request to reset your password. Click the button below to create a new password:</p>
+              <a href="${resetLink}" class="button">Reset Password</a>
+              <p>If you didn't request this, you can safely ignore this email.</p>
+            </div>
           </div>
-          <p>If you didn't request a password reset, you can safely ignore this email.</p>
-          <p>Best regards,<br>Amazon Team</p>
-        </div>
-      `,
-    };
+        </body>
+      </html>
+    `;
 
-    await this.transporter.sendMail(mailOptions);
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get('GMAIL_USER'),
+        to: to,
+        subject: 'Reset Your Password',
+        html: emailTemplate,
+      });
+    } catch (error) {
+      throw new Error('Failed to send password reset email');
+    }
   }
 }

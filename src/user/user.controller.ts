@@ -68,7 +68,7 @@ export class UserController {
     @Body('email') email?: string,
     @Body('token') token?: string,
   ): Promise<{ message: string; userData: any }> {
-    let user = await this._UserService.verifyEmail(email, token);
+    let user = await this._UserService.verifyEmail(token, email);
     if (token) {
       return { message: 'Email verified successfully', userData: user };
     } else {

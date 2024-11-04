@@ -287,34 +287,6 @@ export class UserService {
     }
   }
 
-  async initiateAdminPasswordReset(email: string): Promise<void> {
-    const user = await this.userModel.findOne({
-      email: email.toLowerCase(),
-      role: 'admin',
-    });
-
-    if (!user) {
-      // Don't reveal whether the email exists or if user is admin
-      return;
-    }
-
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
-
-    try {
-      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
-      await user.save();
-    } catch (error) {
-      this.logger.error(
-        `Failed to initiate admin password reset: ${error.message}`,
-      );
-      throw new InternalServerErrorException(
-        'Failed to send password reset email',
-      );
-    }
-  }
-
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.userModel.findOne({
       resetPasswordToken: token,
@@ -408,6 +380,36 @@ export class UserService {
         throw error;
       }
       throw new Error(`Failed to update user by admin: ${error.message}`);
+    }
+  }
+  async initiateAdminPasswordReset(email: string): Promise<void> {
+    const user = await this.userModel.findOne({
+      email: email.toLowerCase(),
+      role: 'admin',
+    });
+
+    if (!user) {
+      // Don't reveal whether the email exists or if user is admin
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    try {
+      await this.emailService.sendVerificationEmailForAdmin(
+        user.email,
+        resetToken,
+      );
+      await user.save();
+    } catch (error) {
+      this.logger.error(
+        `Failed to initiate admin password reset: ${error.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Failed to send password reset email',
+      );
     }
   }
 

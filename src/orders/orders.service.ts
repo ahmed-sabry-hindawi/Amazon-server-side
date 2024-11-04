@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, OrderStatus } from './schemas/order.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/Update-order.dto';
 import { User } from 'src/user/Schemas/users.schema';
@@ -268,6 +268,95 @@ export class OrdersService {
       throw new InternalServerErrorException(
         `Failed to update the order: ${error.message}`,
       );
+    }
+  }
+
+  async getSellerOrders(sellerId: string) {
+    try {
+      const orders = await this.orderModel
+        .find()
+        .populate({
+          path: 'items.productId',
+          match: { sellerId: new Types.ObjectId(sellerId) }
+        })
+        .populate('userId', 'name email')
+        .exec();
+
+      // Filter out orders that don't have any products for this seller
+      const sellerOrders = orders
+        .map(order => {
+          // Filter out null products (products that didn't match the seller)
+          const sellerItems = order.items.filter(
+            item => item.productId && (item.productId as any).sellerId?.toString() === sellerId
+          );
+
+          if (sellerItems.length === 0) return null;
+
+          // Calculate total price for seller's items only
+          const sellerTotalPrice = sellerItems.reduce((total, item) => {
+            const productPrice = (item.productId as any).price;
+            return total + (productPrice * item.quantity);
+          }, 0);
+
+          return {
+            orderId: order._id,
+            // orderDate: order.createdAt,
+            customer: order.userId,
+            items: sellerItems,
+            orderStatus: order.orderStatus,
+            sellerTotalPrice,
+            shippingAddress: order.shippingAddress,
+          };
+        })
+        .filter(order => order !== null); // Remove orders with no matching products
+
+      return sellerOrders;
+    } catch (error) {
+      throw new Error(`Error fetching seller orders: ${error.message}`);
+    }
+  }
+
+  async getSellerOrderById(sellerId: string, orderId: string) {
+    try {
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate({
+          path: 'items.productId',
+          match: { sellerId: new Types.ObjectId(sellerId) }
+        })
+        .populate('userId', 'name email')
+        .exec();
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      // Filter out null products (products that didn't match the seller)
+      const sellerItems = order.items.filter(
+        item => item.productId && (item.productId as any).sellerId?.toString() === sellerId
+      );
+
+      if (sellerItems.length === 0) {
+        throw new NotFoundException('No products found for this seller in this order');
+      }
+
+      // Calculate total price for seller's items only
+      const sellerTotalPrice = sellerItems.reduce((total, item) => {
+        const productPrice = (item.productId as any).price;
+        return total + (productPrice * item.quantity);
+      }, 0);
+
+      return {
+        orderId: order._id,
+        // orderDate: order.createdAt,
+        customer: order.userId,
+        items: sellerItems,
+        orderStatus: order.orderStatus,
+        sellerTotalPrice,
+        shippingAddress: order.shippingAddress,
+      };
+    } catch (error) {
+      throw new Error(`Error fetching seller order: ${error.message}`);
     }
   }
 }

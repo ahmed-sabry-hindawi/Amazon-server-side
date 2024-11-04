@@ -90,7 +90,7 @@ export class EmailService {
     token: string,
   ): Promise<void> {
     const mailOptions = {
-      from: 'Amazon Website <samman66512@gmail.com>',
+      from: 'Amazon Admin Portal <samman66512@gmail.com>',
       to: to,
       subject: 'Verify Your Email Address',
       html: `
@@ -104,7 +104,7 @@ export class EmailService {
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${this.configService.get<string>('FRONTEND_URL_ADMIN')}/verifyEmail?token=${token}" 
+            <a href="${this.configService.get<string>('FRONTEND_URL_ADMIN')}/resetPassword?token=${token}" 
                style="background-color: #ff9900; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
               Verify Email Address
             </a>

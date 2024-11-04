@@ -205,4 +205,34 @@ export class UserController {
     await this._UserService.deleteUser(userId);
     return { message: 'User deleted successfully' };
   }
+
+  @Post('admin/login')
+  @HttpCode(HttpStatus.OK)
+  async adminLogin(
+    @Body() user: Login,
+  ): Promise<{ token: string; email: string; userName: string }> {
+    return await this._AuthService.adminLogin(user);
+  }
+
+  @Post('admin/reset-password')
+  @HttpCode(HttpStatus.OK)
+  async adminResetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.adminResetPassword(token, newPassword);
+    return { message: 'Admin password has been reset successfully' };
+  }
+
+  @Post('admin/initiate-password-reset')
+  @HttpCode(HttpStatus.OK)
+  async initiateAdminPasswordReset(
+    @Body('email') email: string,
+  ): Promise<{ message: string }> {
+    await this._UserService.initiateAdminPasswordReset(email);
+    return {
+      message:
+        'If an admin account exists with this email, a password reset link will be sent.',
+    };
+  }
 } // class

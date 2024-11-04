@@ -337,6 +337,29 @@ export class UserService {
     }
   }
 
+  async initiateAdminPasswordReset(email: string): Promise<void> {
+    const user = await this.userModel.findOne({ email, role: 'admin' });
+    if (!user) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    const randomToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = randomToken;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // Valid for one hour
+    await user.save();
+
+    try {
+      await this.emailService.sendPasswordResetEmailForAdmin(email, resetToken);
+    } catch (error) {
+      // Reset the token if email sending fails
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      throw new Error('Failed to send password reset email');
+    }
+  }
+
   async adminResetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.userModel.findOne({
       resetPasswordToken: token,
@@ -350,10 +373,21 @@ export class UserService {
       );
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+    // Validate password strength
+    if (newPassword.length < 8) {
+      throw new BadRequestException(
+        'Password must be at least 8 characters long',
+      );
+    }
+
+    try {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+    } catch (error) {
+      throw new Error('Failed to reset password');
+    }
   }
 }

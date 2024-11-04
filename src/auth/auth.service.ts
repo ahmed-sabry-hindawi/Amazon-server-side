@@ -55,6 +55,9 @@ export class AuthService {
   async adminLogin(
     user: Login,
   ): Promise<{ token: string; email: string; userName: string }> {
+    if (!user.email || !user.password) {
+      throw new BadRequestException('Invalid Email OR Password');
+    }
     const foundUser = await this.userModel.findOne({ email: user.email });
 
     if (!foundUser || foundUser.role !== 'admin') {

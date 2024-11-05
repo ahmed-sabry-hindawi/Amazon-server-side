@@ -36,6 +36,10 @@ export class AuthService {
     if (!isValid) {
       throw new UnauthorizedException('Invalid Email OR Password');
     }
+    if (!user.isActive) {
+      user.isActive = true;
+      await user.save();
+    }
     const payload = {
       email: user.email,
       id: user._id,
@@ -77,7 +81,13 @@ export class AuthService {
       foundUser.password,
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'Invalid credentials or Invalid Password and Email',
+      );
+    }
+    if (!foundUser.isActive) {
+      foundUser.isActive = true;
+      await foundUser.save();
     }
 
     const payload = {
@@ -91,5 +101,10 @@ export class AuthService {
       email: foundUser.email,
       userName: foundUser.name,
     };
+  }
+
+  async logout(userId: string): Promise<{ message: string }> {
+    await this.userModel.findByIdAndUpdate(userId, { isActive: false });
+    return { message: 'Logged out successfully' };
   }
 }

@@ -89,7 +89,7 @@ export class SellerService {
 
   async getSellerByUserId(userId: string): Promise<Seller> {
     try {
-      const seller = await this.sellerModel.findOne({ userId });
+      const seller = await this.sellerModel.findOne({ userId }).populate({ path: 'userId', select: '-password' });
       if (!seller) {
         throw new NotFoundException(`Seller with user ID ${userId} not found`);
       }

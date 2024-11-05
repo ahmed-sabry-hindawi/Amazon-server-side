@@ -68,13 +68,13 @@ export class UserController {
     @Body('email') email?: string,
     @Body('token') token?: string,
   ): Promise<{ message: string; userData: any }> {
-    let user = await this._UserService.verifyEmail(token, email);
+    let user = await this._UserService.verifyEmail(email, token);
     if (token) {
       return { message: 'Email verified successfully', userData: user };
     } else {
       return {
         message: 'Email is already verified, you can log in',
-        userData: 'Not Found any user ',
+        userData: user,
       };
     }
   }
@@ -85,6 +85,13 @@ export class UserController {
     @Body() user: Login,
   ): Promise<{ token: string; email: string; userName: string }> {
     return await this._AuthService.login(user);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req): Promise<{ message: string }> {
+    const userId = req.user.id;
+    return await this._AuthService.logout(userId);
   }
 
   @Patch('update/password')

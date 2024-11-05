@@ -82,7 +82,8 @@ export class UserService {
   async createNewUser(userData: CreateUserDto): Promise<UpdateUserDto> {
     try {
       const existingUser = await this.userModel
-        .findOne({ email: userData.email.toLowerCase() })
+        .findOne({ email: userData.email })
+
         .exec();
 
       if (existingUser) {
@@ -116,7 +117,8 @@ export class UserService {
       // Create new user
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
-      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const randomToken = crypto.randomBytes(32).toString('hex');
+      const verificationToken = randomToken;
 
       const newUser = new this.userModel({
         ...userData,
@@ -124,7 +126,7 @@ export class UserService {
         password: hashedPassword,
         verificationToken,
         isVerified: false,
-        isActive: true,
+        isActive: false,
       });
 
       try {

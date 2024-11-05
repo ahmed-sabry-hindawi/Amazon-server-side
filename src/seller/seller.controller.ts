@@ -123,10 +123,8 @@ export class SellerController {
      @Get('seller')
      @UseGuards(AuthenticationGuard,AuthorizationGuard)
      @Roles('seller')
-     async getSellerByUserId(@Request() req): Promise<Seller> {
+     async getSellerByUserId(@Request() req: { user: { id: string } }): Promise<Seller> {
        const userId = req.user.id;
-       console.log(userId);
-       
        return this.sellerService.getSellerByUserId(userId);
      }
 

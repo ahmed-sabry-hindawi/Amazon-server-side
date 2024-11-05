@@ -215,7 +215,7 @@ export class OrdersController {
     //first check if the order created by this user
     const userId = req.user.id;
     const userRole = req.user.role;
-    console.log(userRole);
+    // console.log(userRole);
     if (userRole === 'admin') {
       return await this.ordersService.deleteById(id);
     }

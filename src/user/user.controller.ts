@@ -87,8 +87,9 @@ export class UserController {
     return await this._AuthService.login(user);
   }
 
-  @Post('logout')
+  @Post('/logout')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async logout(@Request() req): Promise<{ message: string }> {
     const userId = req.user.id;
     return await this._AuthService.logout(userId);

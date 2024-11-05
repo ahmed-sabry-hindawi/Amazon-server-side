@@ -51,6 +51,10 @@ export class Product extends Document {
 
   @Prop({ default: 0 })
   stock: number;
+
+  // adding is verified or not field for the admin to approve this product
+  @Prop({ default: false })
+  isVerified: boolean;
 }
 
 // Create a text index on the `name.en`, `name.ar`, and `description` fields

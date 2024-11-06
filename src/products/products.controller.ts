@@ -132,8 +132,8 @@ export class ProductsController {
   }
 
   @Get('seller/products')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Roles('seller', 'admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async getSellerProductsWithPagination(
     @Req() req: any,
     @Query('page') page: number = 1,

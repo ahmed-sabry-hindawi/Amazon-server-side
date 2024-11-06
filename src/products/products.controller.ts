@@ -331,4 +331,11 @@ export class ProductsController {
     }
     return this.productsService.getProductReviews(productId);
   }
+
+  @Get(':id/average-rating')
+  async getProductAverageRating(
+    @Param('id') productId: string
+  ): Promise<{ averageRating: number; totalReviews: number }> {
+    return this.productsService.getProductAverageRating(productId);
+  }
 }

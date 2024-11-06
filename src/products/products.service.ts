@@ -698,4 +698,44 @@ export class ProductsService {
       );
     }
   }
+
+  async getProductAverageRating(
+    productId: string,
+  ): Promise<{ averageRating: number; totalReviews: number }> {
+    try {
+      const product = await this.productModel
+        .findById(productId)
+        .populate({
+          path: 'reviews',
+          select: 'rating',
+        })
+        .lean()
+        .exec();
+
+      if (!product) {
+        throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!product.reviews || product.reviews.length === 0) {
+        return { averageRating: 0, totalReviews: 0 };
+      }
+
+      const totalRating = product.reviews.reduce(
+        (sum, review: any) => sum + review.rating,
+        0,
+      );
+
+      return {
+        averageRating: Number(
+          (totalRating / product.reviews.length).toFixed(1),
+        ),
+        totalReviews: product.reviews.length,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Error calculating average rating: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

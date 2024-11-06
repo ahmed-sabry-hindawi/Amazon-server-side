@@ -4,11 +4,13 @@ import { Product } from './schemas/product.schema';
 import { Model, Types } from 'mongoose';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
+import { Order, OrderStatus } from 'src/orders/schemas/order.schema';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
+    @InjectModel(Order.name) private orderModel: Model<Order>,
   ) {}
   /*
   async getAllProducts(): Promise<Product[]> {
@@ -607,6 +609,93 @@ export class ProductsService {
       return { modifiedCount: result.modifiedCount };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getReviewsForCompletedOrderProducts(): Promise<
+    { productId: string; reviews: any[] }[]
+  > {
+    try {
+      // First, get all completed orders
+      const completedOrders = await this.orderModel
+        .find({ orderStatus: OrderStatus.Completed })
+        .populate({
+          path: 'items.productId',
+          select: '_id name',
+        })
+        .exec();
+
+      if (!completedOrders.length) {
+        return [];
+      }
+
+      // Extract product IDs from completed orders
+      const productIds = completedOrders.flatMap((order) =>
+        order.items.map((item) => new Types.ObjectId(item.productId._id)),
+      );
+
+      // Get unique product IDs
+      const uniqueProductIds = [
+        ...new Set(productIds.map((id) => id.toString())),
+      ];
+
+      // Get products with their reviews
+      const productsWithReviews = await this.productModel
+        .find({
+          _id: { $in: uniqueProductIds.map((id) => new Types.ObjectId(id)) },
+        })
+        .populate({
+          path: 'reviews',
+          populate: {
+            path: 'userId',
+            select: 'name email',
+          },
+        })
+        .select('_id name reviews')
+        .lean()
+        .exec();
+
+      return productsWithReviews.map((product) => ({
+        productId: product._id.toString(),
+        productName: product.name,
+        reviews: product.reviews || [],
+      }));
+    } catch (error) {
+      throw new HttpException(
+        `Error fetching reviews: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getProductReviews(productId: string): Promise<any> {
+    try {
+      const product = await this.productModel
+        .findById(productId)
+        .populate({
+          path: 'reviews',
+          populate: {
+            path: 'userId',
+            select: 'name email',
+          },
+        })
+        .select('reviews')
+        .lean()
+        .exec();
+
+      if (!product) {
+        throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+      }
+
+      return {
+        productId,
+        reviews: product.reviews || [],
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Error fetching product reviews: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

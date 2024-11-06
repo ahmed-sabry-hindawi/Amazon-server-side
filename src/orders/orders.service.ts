@@ -2,6 +2,8 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, OrderStatus } from './schemas/order.schema';
@@ -277,17 +279,19 @@ export class OrdersService {
         .find()
         .populate({
           path: 'items.productId',
-          match: { sellerId: new Types.ObjectId(sellerId) }
+          match: { sellerId: new Types.ObjectId(sellerId) },
         })
         .populate('userId', 'name email')
         .exec();
 
       // Filter out orders that don't have any products for this seller
       const sellerOrders = orders
-        .map(order => {
+        .map((order) => {
           // Filter out null products (products that didn't match the seller)
           const sellerItems = order.items.filter(
-            item => item.productId && (item.productId as any).sellerId?.toString() === sellerId
+            (item) =>
+              item.productId &&
+              (item.productId as any).sellerId?.toString() === sellerId,
           );
 
           if (sellerItems.length === 0) return null;
@@ -295,7 +299,7 @@ export class OrdersService {
           // Calculate total price for seller's items only
           const sellerTotalPrice = sellerItems.reduce((total, item) => {
             const productPrice = (item.productId as any).price;
-            return total + (productPrice * item.quantity);
+            return total + productPrice * item.quantity;
           }, 0);
 
           return {
@@ -308,7 +312,7 @@ export class OrdersService {
             shippingAddress: order.shippingAddress,
           };
         })
-        .filter(order => order !== null); // Remove orders with no matching products
+        .filter((order) => order !== null); // Remove orders with no matching products
 
       return sellerOrders;
     } catch (error) {
@@ -322,7 +326,7 @@ export class OrdersService {
         .findById(orderId)
         .populate({
           path: 'items.productId',
-          match: { sellerId: new Types.ObjectId(sellerId) }
+          match: { sellerId: new Types.ObjectId(sellerId) },
         })
         .populate('userId', 'name email')
         .exec();
@@ -333,17 +337,21 @@ export class OrdersService {
 
       // Filter out null products (products that didn't match the seller)
       const sellerItems = order.items.filter(
-        item => item.productId && (item.productId as any).sellerId?.toString() === sellerId
+        (item) =>
+          item.productId &&
+          (item.productId as any).sellerId?.toString() === sellerId,
       );
 
       if (sellerItems.length === 0) {
-        throw new NotFoundException('No products found for this seller in this order');
+        throw new NotFoundException(
+          'No products found for this seller in this order',
+        );
       }
 
       // Calculate total price for seller's items only
       const sellerTotalPrice = sellerItems.reduce((total, item) => {
         const productPrice = (item.productId as any).price;
-        return total + (productPrice * item.quantity);
+        return total + productPrice * item.quantity;
       }, 0);
 
       return {
@@ -357,6 +365,29 @@ export class OrdersService {
       };
     } catch (error) {
       throw new Error(`Error fetching seller order: ${error.message}`);
+    }
+  }
+
+  async getUserCompletedOrders(userId: string): Promise<Order[]> {
+    try {
+      return await this.orderModel
+        .find({
+          userId: userId,
+          orderStatus: {
+            $regex: new RegExp('^(completed|delivered)$', 'i'),
+          },
+        })
+        .populate({
+          path: 'items.productId',
+          select: '_id name',
+        })
+        .lean()
+        .exec();
+    } catch (error) {
+      throw new HttpException(
+        `Error fetching completed orders: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

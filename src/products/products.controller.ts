@@ -117,6 +117,13 @@ export class ProductsController {
     return this.productsService.getProductsBySearchQuery(query);
   }
 
+  @Get('completed-orders-reviews')
+  async getReviewsForCompletedOrderProducts(): Promise<
+    { productId: string; reviews: any[] }[]
+  > {
+    return this.productsService.getReviewsForCompletedOrderProducts();
+  }
+
   @Get('category/:subcategoryId')
   async getProductsByCategory(
     @Param('subcategoryId') subcategoryId: string,
@@ -133,7 +140,7 @@ export class ProductsController {
     @Query('limit') limit: number = 10,
   ): Promise<{ products: Product[]; totalCount: number }> {
     const sellerId = req.user.id;
-    console.log(sellerId, '🔴🔴');
+    // console.log(sellerId, '🔴🔴');
 
     if (!Types.ObjectId.isValid(sellerId)) {
       throw new BadRequestException('Invalid sellerId');
@@ -315,5 +322,20 @@ export class ProductsController {
       productId,
       isVerified,
     );
+  }
+
+  @Get(':id/reviews')
+  async getProductReviews(@Param('id') productId: string): Promise<any> {
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException('Invalid product ID');
+    }
+    return this.productsService.getProductReviews(productId);
+  }
+
+  @Get(':id/average-rating')
+  async getProductAverageRating(
+    @Param('id') productId: string
+  ): Promise<{ averageRating: number; totalReviews: number }> {
+    return this.productsService.getProductAverageRating(productId);
   }
 }

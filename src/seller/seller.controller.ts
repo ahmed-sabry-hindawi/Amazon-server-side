@@ -180,5 +180,12 @@ export class SellerController {
     return this.ordersService.getSellerOrderById(sellerId, orderId);
   }
 
+  @Get('dashboard/stats')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Roles('seller')
+  async getSellerDashboardStats(@Request() req) {
+    const sellerId = req.user.id;
+    return this.sellerService.getSellerDashboardStats(sellerId);
+  }
 
 }

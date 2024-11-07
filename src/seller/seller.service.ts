@@ -166,22 +166,47 @@ export class SellerService {
       // Get all orders that contain products from this seller
       const orders = await this.orderModel.aggregate([
         {
+          $unwind: '$items'  // Unwind the items array to work with individual items
+        },
+        {
           $lookup: {
             from: 'products',
-            localField: 'items.productId',
-            foreignField: '_id',
-            as: 'products'
+            let: { productId: '$items.productId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$_id', '$$productId'] },
+                      { $eq: ['$sellerId', new Types.ObjectId(sellerId)] }
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'sellerProduct'
           }
         },
         {
           $match: {
-            'products.sellerId': new Types.ObjectId(sellerId)
+            'sellerProduct': { $ne: [] }  // Only keep orders with products from this seller
+          }
+        },
+        {
+          $group: {
+            _id: '$_id',
+            orderStatus: { $first: '$orderStatus' },
+            items: { $push: '$items' },
+            createdAt: { $first: '$createdAt' },
+            products: { $push: { $arrayElemAt: ['$sellerProduct', 0] } }
           }
         }
       ]);
 
       // Get all products from this seller
-      const products = await this.productModel.find({ sellerId });
+      const products = await this.productModel.find({ 
+        sellerId: new Types.ObjectId(sellerId) 
+      });
 
       // Calculate statistics
       const stats = {

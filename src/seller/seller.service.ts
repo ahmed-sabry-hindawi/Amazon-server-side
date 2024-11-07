@@ -3,13 +3,19 @@ import { CreateSellerDto } from './dto/create-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { Seller } from './schemas/seller.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from 'src/user/Schemas/users.schema';
+import { OrderStatus } from '../orders/schemas/order.schema';
+import { Product } from '../products/schemas/product.schema';
+import { Order } from '../orders/schemas/order.schema';
+
 @Injectable()
 export class SellerService {
   constructor(
     @InjectModel('Seller') private sellerModel: Model<Seller>,
     @InjectModel('User') private userModel: Model<User>,
+    @InjectModel('Order') private orderModel: Model<Order>,
+    @InjectModel('Product') private productModel: Model<Product>,
   ) {}
 
  
@@ -152,6 +158,100 @@ export class SellerService {
       return { total, pending, approved, rejected };
     } catch (error) {
       throw new HttpException('Error fetching seller stats: ' + error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getSellerDashboardStats(sellerId: string) {
+    try {
+      // Get all orders that contain products from this seller
+      const orders = await this.orderModel.aggregate([
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'items.productId',
+            foreignField: '_id',
+            as: 'products'
+          }
+        },
+        {
+          $match: {
+            'products.sellerId': new Types.ObjectId(sellerId)
+          }
+        }
+      ]);
+
+      // Get all products from this seller
+      const products = await this.productModel.find({ sellerId });
+
+      // Calculate statistics
+      const stats = {
+        orders: {
+          total: orders.length,
+          pending: orders.filter(o => o.orderStatus === OrderStatus.Pending).length,
+          completed: orders.filter(o => o.orderStatus === OrderStatus.Completed).length,
+          shipped: orders.filter(o => o.orderStatus === OrderStatus.SHIPPED).length,
+          delivered: orders.filter(o => o.orderStatus === OrderStatus.DELIVERED).length,
+          cancelled: orders.filter(o => o.orderStatus === OrderStatus.CANCELLED).length,
+        },
+        products: {
+          total: products.length,
+          inStock: products.filter(p => p.stock > 0).length,
+          outOfStock: products.filter(p => p.stock === 0).length,
+          lowStock: products.filter(p => p.stock <= 5).length, // Assuming 5 is low stock threshold
+        },
+        revenue: {
+          total: orders
+            .filter(o => o.orderStatus !== OrderStatus.CANCELLED)
+            .reduce((acc, order) => {
+              const sellerItems = order.items.filter(item => 
+                order.products.some(p => 
+                  p._id.equals(item.productId) && p.sellerId.equals(sellerId)
+                )
+              );
+              return acc + sellerItems.reduce((sum, item) => {
+                const product = order.products.find(p => p._id.equals(item.productId));
+                return sum + (product.price * item.quantity);
+              }, 0);
+            }, 0),
+        },
+        recentOrders: orders
+          .sort((a, b) => b.createdAt - a.createdAt)
+          .slice(0, 5),
+        topProducts: await this.productModel.aggregate([
+          {
+            $match: { sellerId: new Types.ObjectId(sellerId) }
+          },
+          {
+            $lookup: {
+              from: 'orders',
+              localField: '_id',
+              foreignField: 'items.productId',
+              as: 'orders'
+            }
+          },
+          {
+            $project: {
+              name: 1,
+              totalSold: {
+                $size: '$orders'
+              }
+            }
+          },
+          {
+            $sort: { totalSold: -1 }
+          },
+          {
+            $limit: 5
+          }
+        ])
+      };
+
+      return stats;
+    } catch (error) {
+      throw new HttpException(
+        'Error fetching seller dashboard stats: ' + error.message,
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 }

@@ -37,6 +37,13 @@ export class ReviewsController {
     );
   }
 
+  @Get('user')
+  @UseGuards(AuthenticationGuard)
+  async findByUserId(@Request() req): Promise<Review[]> {
+    const userId = req.user.id;
+    return this.reviewsService.findByUserId(userId);
+  }
+
   // Get all reviews for a product
   // done
   @Get('product/:productId')

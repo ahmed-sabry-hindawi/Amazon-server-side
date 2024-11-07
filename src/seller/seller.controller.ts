@@ -33,7 +33,7 @@ export class SellerController {
   // register the seller
   //done 
   @Post('register')
-  @UseGuards(AuthenticationGuard)
+  @UseGuards(AuthenticationGuard,AuthorizationGuard)
   @Roles('user')
   async registerSeller(
     @Body() createSellerDto: CreateSellerDto,

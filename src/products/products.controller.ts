@@ -55,8 +55,6 @@ export class ProductsController {
   async getProductsWithFiltering(
     @Query() x: { [key: string]: any },
   ): Promise<Product[]> {
-   
-
     return this.productsService.getProductsWithFiltering(x);
   }
   /************************************************************************* */
@@ -126,11 +124,26 @@ export class ProductsController {
     return this.productsService.getProductsByCategory(subcategoryId);
   }
 
-  @Get('seller/:sellerId')
-  async getProductsBySeller(
-    @Param('sellerId') sellerId: string,
-  ): Promise<Product[]> {
-    return this.productsService.getProductsBySeller(sellerId);
+  @Get('seller/products')
+  @Roles('seller', 'admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async getSellerProductsWithPagination(
+    @Req() req: any,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ products: Product[]; totalCount: number }> {
+    const sellerId = req.user.id;
+    console.log(sellerId, '🔴🔴');
+
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new BadRequestException('Invalid sellerId');
+    }
+
+    return this.productsService.getSellerProductsWithPagination(
+      sellerId,
+      page,
+      limit,
+    );
   }
 
   @Get('highlighted-reviews/:id')
@@ -154,7 +167,9 @@ export class ProductsController {
     @Query('maxPrice') maxPrice?: string,
     @Query('sortBy') sortBy: 'price' | 'name' = 'price',
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
-  ): Promise<Product[]> {
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ products: Product[]; totalCount: number }> {
     return this.productsService.getFilteredProducts(
       categoryId,
       brand,
@@ -162,7 +177,20 @@ export class ProductsController {
       maxPrice ? parseFloat(maxPrice) : undefined,
       sortBy,
       sortOrder,
+      page,
+      limit,
     );
+  }
+
+  @Put('verify-all')
+  // @Roles('admin')
+  // @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async verifyAllProducts(): Promise<{ modifiedCount: number }> {
+    try {
+      return await this.productsService.verifyAllProducts();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')
@@ -190,7 +218,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('seller',"admin")
+  @Roles('seller', 'admin')
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   async updateProduct(
     @Param('id') productId: string,
@@ -274,5 +302,18 @@ export class ProductsController {
     @Body('stock') stock: number,
   ): Promise<Product> {
     return this.productsService.updateProductStock(productId, stock);
+  }
+
+  @Put(':id/verify')
+  @Roles('admin')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async updateProductVerification(
+    @Param('id') productId: string,
+    @Body('isVerified') isVerified: boolean,
+  ): Promise<Product> {
+    return this.productsService.updateProductVerification(
+      productId,
+      isVerified,
+    );
   }
 }

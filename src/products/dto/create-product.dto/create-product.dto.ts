@@ -56,4 +56,8 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsNumber()
   stock: number;
+
+  @IsOptional()
+  @IsNotEmpty()
+  isVerified?: boolean;
 }

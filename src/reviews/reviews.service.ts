@@ -157,4 +157,22 @@ export class ReviewsService {
       );
     }
   }
+
+  async findByUserId(userId: string): Promise<Review[]> {
+    try {
+      return await this.reviewModel
+        .find({ userId })
+        .populate({
+          path: 'productId',
+          select: 'name imageUrls',
+        })
+        .lean()
+        .exec();
+    } catch (error) {
+      throw new HttpException(
+        'Error fetching user reviews: ' + error.message,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -342,7 +342,7 @@ export class ProductsService {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
+  // ..................................................
   async findBySubcategoryIdAndName(
     subcategoryId?: string,
     name?: string,
@@ -352,7 +352,7 @@ export class ProductsService {
         `Searching for products with subcategoryId: ${subcategoryId || 'not provided'} and name: ${name || 'not provided'}`,
       );
 
-      const query: any = {};
+      const query: any = { isVerified: true };
 
       if (subcategoryId) {
         query.subcategoryId = subcategoryId;
@@ -546,7 +546,7 @@ export class ProductsService {
     limit: number = 12,
   ): Promise<{ products: Product[]; totalCount: number }> {
     try {
-      let query = this.productModel.find();
+      let query = this.productModel.find({ isVerified: true });
 
       if (categoryId) {
         query = query.where('subcategoryId', categoryId);

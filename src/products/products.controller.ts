@@ -26,7 +26,10 @@ import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { Types } from 'mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RateLimit } from 'nestjs-rate-limiter';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @Controller('products')
 export class ProductsController {
   constructor(

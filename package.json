@@ -2,9 +2,10 @@
   "name": "amazon-client-side",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Ahmed elsamman",
   "private": true,
   "license": "UNLICENSED",
+  "homepage": "./",
   "scripts": {
     "build": "nest build",
     "vercel-build": "npm run build",

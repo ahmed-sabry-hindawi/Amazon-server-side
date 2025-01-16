@@ -29,7 +29,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { RateLimit } from 'nestjs-rate-limiter';
 import { SkipThrottle } from '@nestjs/throttler';
 
-@SkipThrottle()
+@SkipThrottle({ default: true })
 @Controller('products')
 export class ProductsController {
   constructor(

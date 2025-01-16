@@ -173,7 +173,6 @@ export class OrdersController {
     const userId = req.user.id;
     const userOrders = await this.ordersService.findByUserId(userId);
 
-
     const isBelongTo = userOrders.find((order) => {
       return order.userId._id.toString() == userId;
     });
@@ -215,7 +214,7 @@ export class OrdersController {
     //first check if the order created by this user
     const userId = req.user.id;
     const userRole = req.user.role;
-    console.log(userRole);
+    // console.log(userRole);
     if (userRole === 'admin') {
       return await this.ordersService.deleteById(id);
     }
@@ -303,5 +302,12 @@ export class OrdersController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Get('user/completed')
+  @UseGuards(AuthenticationGuard)
+  async getUserCompletedOrders(@Request() req): Promise<Order[]> {
+    const userId = req.user.id;
+    return this.ordersService.getUserCompletedOrders(userId);
   }
 }

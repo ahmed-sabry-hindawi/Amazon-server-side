@@ -19,11 +19,16 @@ import { Seller } from './schemas/seller.schema';
 import { Roles } from 'src/common/Decorators/roles/roles.decorator';
 import { AuthenticationGuard } from 'src/common/Guards/authentication/authentication.guard';
 import { AuthorizationGuard } from 'src/common/Guards/authorization/authorization.guard';
+import { OrdersService } from '../orders/orders.service';
+import { Order } from '../orders/schemas/order.schema';
 // import { User } from '@/user/schemas/user.schema';
 
 @Controller('sellers')
 export class SellerController {
-  constructor(private sellerService: SellerService) {}
+  constructor(
+    private sellerService: SellerService,
+    private ordersService: OrdersService,
+  ) {}
 
   // register the seller
   //done 
@@ -117,11 +122,9 @@ export class SellerController {
      //done
      @Get('seller')
      @UseGuards(AuthenticationGuard,AuthorizationGuard)
-     @Roles('seller','admin')
-     async getSellerByUserId(@Request() req): Promise<Seller> {
+     @Roles('seller')
+     async getSellerByUserId(@Request() req: { user: { id: string } }): Promise<Seller> {
        const userId = req.user.id;
-       console.log(userId);
-       
        return this.sellerService.getSellerByUserId(userId);
      }
 
@@ -148,4 +151,41 @@ export class SellerController {
   async getSellerStats() {
     return this.sellerService.getSellerStats();
   }
+
+
+  // get all orders for the seller
+  @Get('my/orders')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Roles('seller')
+  async getSellerOrders(@Request() req: { user: { id: string, role: string } }) {
+    const sellerId = req.user.id;
+    
+    // Add role verification
+    if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+      throw new ForbiddenException('Only sellers can access their orders');
+    }
+    
+    return this.ordersService.getSellerOrders(sellerId);
+  }
+
+  // get order by id for the seller
+  @Get('my/orders/:orderId')
+  @UseGuards(AuthenticationGuard,AuthorizationGuard)
+  @Roles('seller')
+  async getSellerOrderById(
+    @Request() req: { user: { id: string } },
+    @Param('orderId') orderId: string
+  ) {
+    const sellerId = req.user.id;
+    return this.ordersService.getSellerOrderById(sellerId, orderId);
+  }
+
+  @Get('dashboard/stats')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Roles('seller')
+  async getSellerDashboardStats(@Request() req) {
+    const sellerId = req.user.id;
+    return this.sellerService.getSellerDashboardStats(sellerId);
+  }
+
 }
